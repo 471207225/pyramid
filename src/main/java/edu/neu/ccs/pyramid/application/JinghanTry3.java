@@ -2,36 +2,27 @@ package edu.neu.ccs.pyramid.application;
 
 import edu.neu.ccs.pyramid.configuration.Config;
 import edu.neu.ccs.pyramid.dataset.DataSet;
-import edu.neu.ccs.pyramid.dataset.DataSetBuilder;
-import edu.neu.ccs.pyramid.dataset.DataSetType;
 import edu.neu.ccs.pyramid.dataset.SparseDataSet;
 import edu.neu.ccs.pyramid.eval.RMSE;
 import edu.neu.ccs.pyramid.feature.Feature;
 import edu.neu.ccs.pyramid.feature.FeatureList;
-import edu.neu.ccs.pyramid.jinghan.WordVectorRegOptimizer;
-import edu.neu.ccs.pyramid.jinghan.WordVectorRegression;
 import edu.neu.ccs.pyramid.optimization.GradientDescent;
 import edu.neu.ccs.pyramid.optimization.GradientValueOptimizer;
 import edu.neu.ccs.pyramid.optimization.LBFGS;
+import edu.neu.ccs.pyramid.regression.least_squares_boost.LSBoost;
+import edu.neu.ccs.pyramid.regression.least_squares_boost.LSBoostOptimizer;
 import edu.neu.ccs.pyramid.regression.linear_regression.LinearRegression;
 import edu.neu.ccs.pyramid.regression.linear_regression.SquareLoss;
 import edu.neu.ccs.pyramid.regression.regression_tree.RegTreeConfig;
 import edu.neu.ccs.pyramid.regression.regression_tree.RegTreeFactory;
-import edu.neu.ccs.pyramid.util.PrintUtil;
-import edu.neu.ccs.pyramid.util.Serialization;
-import org.apache.commons.io.FileUtils;
-import org.apache.mahout.math.DenseVector;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Created by chengli on 11/20/16.
  */
-public class JinghanTry2 {
+public class JinghanTry3 {
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             throw new IllegalArgumentException("Please specify a properties file.");
@@ -50,25 +41,19 @@ public class JinghanTry2 {
         double [] train_labels = loadlabels(config.getString("input.trainLabel"), config);
         double [] test_labels = loadlabels(config.getString("input.testLabel"), config);
 
-        LinearRegression linearRegression = new LinearRegression(train_docstoword.getNumFeatures());
+        LSBoost lsBoost = new LSBoost();
 
-        SquareLoss squareLoss = new SquareLoss(linearRegression, train_docstoword, train_labels, config.getDouble("variance"));
-
-        GradientValueOptimizer optimizer = null;
-        switch (config.getString("optimizer")){
-            case "GD":
-                optimizer = new GradientDescent(squareLoss);
-                break;
-            case "LBFGS":
-                optimizer = new LBFGS(squareLoss);
-                break;
-        }
+        RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(2);
+        RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
+        LSBoostOptimizer optimizer = new LSBoostOptimizer(lsBoost, train_docstoword, regTreeFactory, train_labels);
+        optimizer.setShrinkage(0.1);
+        optimizer.initialize();
 
         for (int iter=0;iter<config.getInt("iterations");iter++){
             optimizer.iterate();
             System.out.println("iteration "+iter);
-            System.out.println("training RMSE = "+ RMSE.rmse(train_labels, linearRegression.predict(train_docstoword)));
-            System.out.println("test RMSE = "+ RMSE.rmse(test_labels, linearRegression.predict(test_docstoword)));
+            System.out.println("training RMSE = "+ RMSE.rmse(train_labels, lsBoost.predict(train_docstoword)));
+            System.out.println("test RMSE = "+ RMSE.rmse(test_labels, lsBoost.predict(test_docstoword)));
         }
 
 
@@ -117,5 +102,4 @@ public class JinghanTry2 {
         }
         return labels;
     }
-
 }

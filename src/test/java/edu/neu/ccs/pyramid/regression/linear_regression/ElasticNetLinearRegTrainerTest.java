@@ -21,8 +21,8 @@ public class ElasticNetLinearRegTrainerTest {
     private static final String TMP = config.getString("output.tmp");
     public static void main(String[] args) throws Exception{
 //        test1();
-//        test2();
-        test3();
+        test2();
+//        test3();
     }
 
     private static void test1() throws Exception{

@@ -26,7 +26,7 @@ public abstract class GradientValueOptimizer implements Optimizer{
         }
     }
 
-    abstract protected void iterate();
+    abstract public void iterate();
 
     @Override
     public double getFinalObjective() {

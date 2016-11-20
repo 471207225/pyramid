@@ -71,7 +71,7 @@ public class SquareLoss implements Optimizable.ByGradientValue{
     private double computeLoss(){
         return IntStream.range(0,dataSet.getNumDataPoints()).parallel()
                 .mapToDouble(i->Math.pow(linearRegression.predict(dataSet.getRow(i))-labels[i],2))
-                .average().getAsDouble();
+                .sum();
     }
 
     private double penalty(){
@@ -88,7 +88,7 @@ public class SquareLoss implements Optimizable.ByGradientValue{
     }
 
     private void updateGradientForBias(double[] residual){
-        double g = MathUtil.arraySum(residual)*2*(-1)/dataSet.getNumDataPoints();
+        double g = MathUtil.arraySum(residual)*2*(-1);
         gradient.set(0,g);
     }
 
@@ -101,7 +101,6 @@ public class SquareLoss implements Optimizable.ByGradientValue{
             double v = nonzeros.get();
             sum += 2*residual[i]*(-v);
         }
-        sum /= dataSet.getNumDataPoints();
         sum += linearRegression.getWeights().getWeightsWithoutBias().get(featureIndex)/priorVariance;
         gradient.set(featureIndex+1, sum);
     }
