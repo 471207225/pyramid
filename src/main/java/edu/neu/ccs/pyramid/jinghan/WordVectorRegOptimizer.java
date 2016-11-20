@@ -74,7 +74,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         return learningRate;
     }
 
-        private double gradientForWord(int wordIndex){
+    private double gradientForWord(int wordIndex){
         double sum = 0;
         for (int i=0;i<numDocs;i++){
             sum += (docScores[i]

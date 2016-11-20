@@ -62,14 +62,23 @@ public class JinghanTry {
         }
         double [] train_labels = loadlabels(config.getString("input.trainLabel"));
         double [] test_labels = loadlabels(config.getString("input.testLabel"));
-        double [] train_weights = loadweights(config.getString("input.trainWeights"));
+
+
+        double [] train_weights;
+        if (config.getBoolean("useWeights")){
+            train_weights = loadweights(config.getString("input.trainWeights"));
+        } else {
+            train_weights = new double[5000];
+            Arrays.fill(train_weights, 1);
+        }
+
 
         DataSet word2vec = loadword2vecMatrix(config.getString("input.word2vec"));
 
         DenseVector initialScores = new DenseVector(5000);
         WordVectorRegression wordVectorRegression = new WordVectorRegression(initialScores);
         // it is essential to set mindataperleave = 0
-        RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(2).setMinDataPerLeaf(0);
+        RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(config.getInt("train.numLeaves")).setMinDataPerLeaf(0);
         RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
         WordVectorRegOptimizer optimizer = new WordVectorRegOptimizer(wordVectorRegression, regTreeFactory, train_docstoword, word2vec, train_labels, train_weights);
         optimizer.setShrinkage(config.getDouble("train.shrinkage"));
@@ -163,7 +172,7 @@ public class JinghanTry {
     }
 
     public static DataSet loadword2vecMatrix(String path) throws Exception{
-        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(5000).numFeatures(5000).build();
+        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(5000).numFeatures(300).build();
         try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int dataIndex = 0;
