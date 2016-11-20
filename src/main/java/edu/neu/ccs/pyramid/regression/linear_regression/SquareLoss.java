@@ -43,6 +43,8 @@ public class SquareLoss implements Optimizable.ByGradientValue{
     @Override
     public void setParameters(Vector parameters) {
         this.linearRegression.getWeights().setWeightVector(parameters);
+        this.isValueCacheValid=false;
+        this.isGradientCacheValid=false;
     }
 
     @Override
