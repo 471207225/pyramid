@@ -74,10 +74,15 @@ public abstract class GBOptimizer {
     }
 
     //todo make it more general
-    protected void shrink(Regressor regressor){
+    protected void shrink(Regressor regressor, double[] searchDir){
+        double learningRate = computeLearningRate(searchDir);
         if (regressor instanceof RegressionTree){
-            ((RegressionTree)regressor).shrink(shrinkage);
+            ((RegressionTree)regressor).shrink(learningRate);
         }
+    }
+
+    protected double computeLearningRate(double[] searchDir){
+        return shrinkage;
     }
 
     protected void updateStagedScore(Regressor regressor, int ensembleIndex,
@@ -99,7 +104,8 @@ public abstract class GBOptimizer {
         }
         for (int k=0;k<boosting.getNumEnsembles();k++){
             Regressor regressor = fitRegressor(k);
-            shrink(regressor);
+            double[] searchDir = regressor.predict(dataSet);
+            shrink(regressor, searchDir);
             System.out.println("regressor = "+regressor);
             boosting.getEnsemble(k).add(regressor);
             updateStagedScores(regressor,k);

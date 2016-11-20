@@ -1,9 +1,11 @@
 package edu.neu.ccs.pyramid.jinghan;
 
 import edu.neu.ccs.pyramid.dataset.DataSet;
+import edu.neu.ccs.pyramid.optimization.BackTrackingLineSearcher;
 import edu.neu.ccs.pyramid.optimization.gradient_boosting.GBOptimizer;
 import edu.neu.ccs.pyramid.optimization.gradient_boosting.GradientBoosting;
 import edu.neu.ccs.pyramid.regression.RegressorFactory;
+import org.apache.mahout.math.DenseVector;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -20,6 +22,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
     private int numDocs;
     private double[] labels;
     private double[] docScores;
+    private double[] wordSumSquare;
 
 
     public WordVectorRegOptimizer(WordVectorRegression wordVectorRegression, RegressorFactory factory,
@@ -32,6 +35,12 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         this.numDocs = doc2word.getNumDataPoints();
         this.labels = labels;
         this.docScores = new double[numDocs];
+        this.wordSumSquare = new double[numWords];
+        for (int w=0;w<numWords;w++){
+            for (int i=0;i<numDocs;i++){
+                wordSumSquare[w] += Math.pow(doc2word.getRow(i).get(w),2);
+            }
+        }
     }
 
     @Override
@@ -51,8 +60,21 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         return gradient;
     }
 
+    @Override
+    protected double computeLearningRate(double[] searchDir) {
+        System.out.println("initial learning rate = "+shrinkage);
+        double[] gradient = gradient(0);
+        // switch back to real gradient
+        WordVecRegLoss loss = new WordVecRegLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1));
+        BackTrackingLineSearcher lineSearcher = new BackTrackingLineSearcher(loss);
+        lineSearcher.setInitialStepLength(shrinkage);
+        BackTrackingLineSearcher.MoveInfo moveInfo = lineSearcher.moveAlongDirection(new DenseVector(searchDir));
+        double learningRate = moveInfo.getStepLength();
+        System.out.println("tuned learning rate = "+learningRate);
+        return learningRate;
+    }
 
-    private double gradientForWord(int wordIndex){
+        private double gradientForWord(int wordIndex){
         double sum = 0;
         for (int i=0;i<numDocs;i++){
             sum += (docScores[i]
@@ -60,6 +82,16 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         }
         return -2*sum;
     }
+
+//    // newton
+//    private double gradientForWord(int wordIndex){
+//        double numerator = 0;
+//        for (int i=0;i<numDocs;i++){
+//            numerator += (labels[i]-docScores[i])*doc2word.getRow(i).get(wordIndex);
+//        }
+//
+//        return numerator/wordSumSquare[wordIndex];
+//    }
 
     private void updateDocScores(){
         IntStream.range(0, numDocs).parallel().forEach(this::updateDocScore);

@@ -79,7 +79,7 @@ public class JinghanTry {
         int numIterations = config.getInt("train.numIterations");
         for(int i=1; i<=numIterations;i++){
             System.out.println("iteration"+i);
-            optimizer.setShrinkage(config.getDouble("train.shrinkage")/numIterations);
+//            optimizer.setShrinkage(config.getDouble("train.shrinkage")/numIterations);
             optimizer.iterate();
             if (config.getBoolean("train.showTrainProgress")&&(i%progressInterval==0 || i== numIterations)){
 
