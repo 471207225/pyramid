@@ -29,4 +29,12 @@ public class RegTreeFactory implements RegressorFactory {
     public Regressor fit(DataSet dataSet, double[] labels, double[] weights) {
         return RegTreeTrainer.fit(regTreeConfig,dataSet,labels,weights, leafOutputCalculator);
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("RegTreeFactory{");
+        sb.append("regTreeConfig=").append(regTreeConfig);
+        sb.append('}');
+        return sb.toString();
+    }
 }

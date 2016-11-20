@@ -64,6 +64,11 @@ public abstract class GBOptimizer {
 
     protected Regressor fitRegressor(int ensembleIndex){
         double[] gradients = gradient(ensembleIndex);
+//        System.out.println("fitting ");
+//        System.out.println("data set = "+dataSet);
+//        System.out.println("gradients = "+Arrays.toString(gradients));
+//        System.out.println("weights = "+Arrays.toString(weights));
+//        System.out.println(factory);
         Regressor regressor = factory.fit(dataSet,gradients, weights);
         return regressor;
     }
@@ -95,6 +100,7 @@ public abstract class GBOptimizer {
         for (int k=0;k<boosting.getNumEnsembles();k++){
             Regressor regressor = fitRegressor(k);
             shrink(regressor);
+            System.out.println("regressor = "+regressor);
             boosting.getEnsemble(k).add(regressor);
             updateStagedScores(regressor,k);
         }

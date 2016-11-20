@@ -16,7 +16,7 @@ public class RegTreeTrainerTest {
     private static final String DATASETS = config.getString("input.datasets");
     private static final String TMP = config.getString("output.tmp");
     public static void main(String[] args) throws Exception{
-        test2();
+        test9();
     }
 
 
@@ -325,6 +325,37 @@ public class RegTreeTrainerTest {
 
 //        System.out.println(regressionTree);
 //        System.out.println(regressionTree.getRootReduction()    );
+
+    }
+
+    private static void test9(){
+        RegDataSet regDataSet = RegDataSetBuilder.getBuilder().numDataPoints(5000).numFeatures(5000)
+                .build();
+        double[] weight = new double[5000];
+        for (int i=0;i<regDataSet.getNumDataPoints();i++){
+            regDataSet.setFeatureValue(i,i,1);
+//            if (i>5){
+//                regDataSet.setLabel(i,1);
+//            }
+            regDataSet.setLabel(i,Math.random()*1E-5);
+            weight[i] = Math.random()*1E-5;
+        }
+
+
+        RegTreeConfig regTreeConfig = new RegTreeConfig();
+
+
+        regTreeConfig.setMaxNumLeaves(2);
+        regTreeConfig.setMinDataPerLeaf(0);
+        regTreeConfig.setNumSplitIntervals(100);
+        RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
+
+
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        RegressionTree regressionTree = (RegressionTree)regTreeFactory.fit(regDataSet, regDataSet.getLabels(), weight);
+//        RegressionTree regressionTree = RegTreeTrainer.fit(regTreeConfig,regDataSet);
+        System.out.println(regressionTree);
 
     }
 

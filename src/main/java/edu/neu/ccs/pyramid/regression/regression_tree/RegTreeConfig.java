@@ -6,7 +6,7 @@ package edu.neu.ccs.pyramid.regression.regression_tree;
 public class RegTreeConfig {
     private int numSplitIntervals=100;
     private int maxNumLeaves=2;
-    private int minDataPerLeaf=1;
+    private int minDataPerLeaf=0;
     private int randomLevel=1;
 
     public RegTreeConfig setMaxNumLeaves(int maxNumLeaves) {
@@ -55,4 +55,14 @@ public class RegTreeConfig {
         return randomLevel;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("RegTreeConfig{");
+        sb.append("numSplitIntervals=").append(numSplitIntervals);
+        sb.append(", maxNumLeaves=").append(maxNumLeaves);
+        sb.append(", minDataPerLeaf=").append(minDataPerLeaf);
+        sb.append(", randomLevel=").append(randomLevel);
+        sb.append('}');
+        return sb.toString();
+    }
 }

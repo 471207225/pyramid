@@ -43,7 +43,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         updateDocScores();
         double[] gradient = new double[numWords];
         for (int i=0;i<gradient.length;i++){
-            gradient[i] = gradient(ensembleIndex, i);
+            gradient[i] = gradientForWord(i);
         }
         System.out.println("gradient is");
         System.out.println(Arrays.toString(gradient));
@@ -52,7 +52,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
     }
 
 
-    private double gradient(int ensembleIndex, int wordIndex){
+    private double gradientForWord(int wordIndex){
         double sum = 0;
         for (int i=0;i<numDocs;i++){
             sum += (docScores[i]
@@ -77,10 +77,11 @@ public class WordVectorRegOptimizer extends GBOptimizer {
     protected void updateOthers() {
         System.out.println("word scores\n");
         for (int i=0;i<numWords;i++){
-            System.out.println(scoreMatrix.getScoresForData(i)[0]);
-            System.out.println(" ");
+//            System.out.println(scoreMatrix.getScoresForData(i)[0]);
+//            System.out.println(" ");
             wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
         }
+        System.out.println(wordVectorRegression.wordScores);
 //        System.out.println(wordVectorRegression.wordScores);
     }
 }
