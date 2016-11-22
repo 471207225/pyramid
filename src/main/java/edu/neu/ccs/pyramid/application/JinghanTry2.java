@@ -74,6 +74,11 @@ public class JinghanTry2 {
         }
         new File(config.getString("outPath_weights")).mkdir();
         File weightReport = new File(config.getString("outPath_weights")+"/weights.txt");
+        for (int j=0;j<train_docstoword.getNumFeatures();j++){
+            System.out.println(train_docstoword.getFeatureList().get(j));
+            System.out.println(linearRegression.getWeights().getWeightsWithoutBias().get(j));
+        }
+
         StringBuilder sb = new StringBuilder();
         for (int j=0;j<train_docstoword.getNumFeatures();j++){
             sb.append(linearRegression.getWeights().getWeightsWithoutBias().get(j));
