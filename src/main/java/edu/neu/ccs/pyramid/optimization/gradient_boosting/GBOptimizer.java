@@ -106,7 +106,7 @@ public abstract class GBOptimizer {
             Regressor regressor = fitRegressor(k);
             double[] searchDir = regressor.predict(dataSet);
             shrink(regressor, searchDir);
-            System.out.println("regressor = "+regressor);
+//            System.out.println("regressor = "+regressor);
             boosting.getEnsemble(k).add(regressor);
             updateStagedScores(regressor,k);
         }

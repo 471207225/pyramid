@@ -172,7 +172,7 @@ public class JinghanTry {
     }
 
     public static DataSet loadword2vecMatrix(String path) throws Exception{
-        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(5000).numFeatures(300).build();
+        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(4998).numFeatures(300).build();
         try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int dataIndex = 0;

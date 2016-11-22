@@ -26,6 +26,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 /**
@@ -70,13 +72,22 @@ public class JinghanTry2 {
             System.out.println("training RMSE = "+ RMSE.rmse(train_labels, linearRegression.predict(train_docstoword)));
             System.out.println("test RMSE = "+ RMSE.rmse(test_labels, linearRegression.predict(test_docstoword)));
         }
+        new File(config.getString("outPath_weights")).mkdir();
+        File weightReport = new File(config.getString("outPath_weights")+"/weights.txt");
+        StringBuilder sb = new StringBuilder();
+        for (int j=0;j<train_docstoword.getNumFeatures();j++){
+            sb.append(linearRegression.getWeights().getWeightsWithoutBias().get(j));
+            sb.append("\n");
+        }
 
 
+        FileUtils.writeStringToFile(weightReport, sb.toString());
     }
 
-
     public static DataSet loadDocMatrix(String path, Config config) throws Exception{
-        DataSet dataSet = new SparseDataSet(config.getInt("numData"), config.getInt("numfeature"), false);
+        int numData = (int)Files.lines(Paths.get(path)).count()-1;
+        int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
+        DataSet dataSet = new SparseDataSet(numData, numFeatures, false);
         try (BufferedReader br = new BufferedReader(new FileReader(path));
         ) {
             String line = null;
@@ -104,9 +115,10 @@ public class JinghanTry2 {
         }
         return dataSet;
     }
-    public static double[] loadlabels(String Path, Config config) throws Exception{
-        double [] labels = new double[config.getInt("numData")];
-        try(BufferedReader br = new BufferedReader(new FileReader(Path))){
+    public static double[] loadlabels(String path, Config config) throws Exception{
+        int numData = (int)Files.lines(Paths.get(path)).count();
+        double [] labels = new double[numData];
+        try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int lineIndex = 0;
             while ((line = br.readLine()) != null) {
