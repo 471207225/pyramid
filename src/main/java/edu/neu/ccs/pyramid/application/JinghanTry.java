@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -34,7 +35,6 @@ import static edu.neu.ccs.pyramid.application.App2.report;
  * Created by jinghanyang on 11/6/16.
  */
 public class JinghanTry {
-
 
 
     public static void main(String[] args) throws Exception {
@@ -124,10 +124,10 @@ public class JinghanTry {
 
 
     public static DataSet loadDocMatrix(String path, Config config) throws Exception{
-        int numWords = config.getInt("numWords");
-        int numDocs = config.getInt("numDocs");
+        int numData = (int)Files.lines(Paths.get(path)).count()-1;
+        int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
 
-        DataSet dataSet = new SparseDataSet(numDocs, numWords, false);
+        DataSet dataSet = new SparseDataSet(numData, numFeatures, false);
         try (BufferedReader br = new BufferedReader(new FileReader(path));
         ) {
             String line = null;
@@ -155,11 +155,11 @@ public class JinghanTry {
         }
         return dataSet;
     }
-    public static double[] loadlabels(String Path, Config config) throws Exception{
-        int numWords = config.getInt("numWords");
-        int numDocs = config.getInt("numDocs");
-        double [] labels = new double[numDocs];
-        try(BufferedReader br = new BufferedReader(new FileReader(Path))){
+    public static double[] loadlabels(String path, Config config) throws Exception{
+        int numData = (int) Files.lines(Paths.get(path)).count();
+
+        double [] labels = new double[numData];
+        try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int lineIndex = 0;
             while ((line = br.readLine()) != null) {
@@ -170,11 +170,10 @@ public class JinghanTry {
             }
         return labels;
     }
-    public static double[] loadweights(String Path, Config config) throws Exception{
-        int numWords = config.getInt("numWords");
-        int numDocs = config.getInt("numDocs");
-        double [] weights = new double[numWords];
-        try(BufferedReader br = new BufferedReader(new FileReader(Path))){
+    public static double[] loadweights(String path, Config config) throws Exception{
+        int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
+        double [] weights = new double[numFeatures];
+        try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int lineIndex = 0;
             while ((line = br.readLine()) != null){
@@ -186,9 +185,10 @@ public class JinghanTry {
     }
 
     public static DataSet loadword2vecMatrix(String path, Config config) throws Exception{
-        int numWords = config.getInt("numWords");
-        int numDocs = config.getInt("numDocs");
-        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(numWords).numFeatures(300).build();
+        int numWords = (int)Files.lines(Paths.get(path)).count();
+        int numFvec = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
+
+        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(numWords).numFeatures(numFvec).build();
         try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int dataIndex = 0;
