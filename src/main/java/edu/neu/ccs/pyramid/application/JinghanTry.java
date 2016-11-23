@@ -7,6 +7,7 @@ import edu.neu.ccs.pyramid.feature.Feature;
 import edu.neu.ccs.pyramid.feature.FeatureList;
 import edu.neu.ccs.pyramid.jinghan.WordVectorRegOptimizer;
 import edu.neu.ccs.pyramid.jinghan.WordVectorRegression;
+import edu.neu.ccs.pyramid.multilabel_classification.cbm.CBM;
 import edu.neu.ccs.pyramid.regression.regression_tree.RegTreeConfig;
 import edu.neu.ccs.pyramid.regression.regression_tree.RegTreeFactory;
 import edu.neu.ccs.pyramid.util.PrintUtil;
@@ -21,7 +22,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import static edu.neu.ccs.pyramid.application.App2.report;
 
@@ -30,6 +34,9 @@ import static edu.neu.ccs.pyramid.application.App2.report;
  * Created by jinghanyang on 11/6/16.
  */
 public class JinghanTry {
+
+
+
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             throw new IllegalArgumentException("Please specify a properties file.");
@@ -43,40 +50,30 @@ public class JinghanTry {
     }
 
     public static void train(Config config) throws Exception{
-        String sparsity = config.getString("input.matrixType");
-        DataSetType dataSetType = null;
-        switch (sparsity){
-            case "dense":
-                dataSetType = DataSetType.REG_DENSE;
-                break;
-            case "sparse":
-                dataSetType = DataSetType.REG_SPARSE;
-                break;
-            default:
-                throw new IllegalArgumentException("input.matrixType should be dense or sparse");
-        }
-        DataSet train_docstoword = loadDocMatrix(config.getString("input.trainData"));
+        int numWords = config.getInt("numWords");
+        
+        DataSet train_docstoword = loadDocMatrix(config.getString("input.trainData"), config);
         DataSet test_docstoword = null;
         if (config.getBoolean("train.showTestProgress")){
-            test_docstoword = loadDocMatrix(config.getString("input.testData"));
+            test_docstoword = loadDocMatrix(config.getString("input.testData"), config);
         }
-        double [] train_labels = loadlabels(config.getString("input.trainLabel"));
-        double [] test_labels = loadlabels(config.getString("input.testLabel"));
+        double [] train_labels = loadlabels(config.getString("input.trainLabel"), config);
+        double [] test_labels = loadlabels(config.getString("input.testLabel"), config);
 
 
         double [] train_weights;
         if (config.getBoolean("useWeights")){
-            train_weights = loadweights(config.getString("input.trainWeights"));
+            train_weights = loadweights(config.getString("input.trainWeights"), config);
         } else {
-            train_weights = new double[5000];
+            train_weights = new double[numWords];
             Arrays.fill(train_weights, 1);
         }
 
 
-        DataSet word2vec = loadword2vecMatrix(config.getString("input.word2vec"));
+        DataSet word2vec = loadword2vecMatrix(config.getString("input.word2vec"), config);
 
-        DenseVector initialScores = new DenseVector(5000);
-        WordVectorRegression wordVectorRegression = new WordVectorRegression(initialScores);
+
+        WordVectorRegression wordVectorRegression = loadModel(config);
         // it is essential to set mindataperleave = 0
         RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(config.getInt("train.numLeaves")).setMinDataPerLeaf(0);
         RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
@@ -86,6 +83,14 @@ public class JinghanTry {
         int progressInterval = config.getInt("train.showProgress.interval");
         
         int numIterations = config.getInt("train.numIterations");
+
+
+        String output = config.getString("output.folder");
+        String modelName = "models";
+        File path = Paths.get(output, modelName).toFile();
+        path.mkdirs();
+        int saveModelInterval = config.getInt("saveModelInterval");
+
         for(int i=1; i<=numIterations;i++){
             System.out.println("iteration"+i);
 //            optimizer.setShrinkage(config.getDouble("train.shrinkage")/numIterations);
@@ -103,21 +108,25 @@ public class JinghanTry {
                 System.out.println("test RMSE = " + RMSE.rmse(test_labels,test_prediction));
                 System.out.println("*******************");
             }
+
+            if (i%saveModelInterval==0){
+                File serializeModel = new File(path,  "iter." + i + ".model");
+                Serialization.serialize(wordVectorRegression, serializeModel);
+            }
         }
-        System.out.println("training done!");
-        String output = config.getString("output.folder");
-        new File(output).mkdir();
-        File serializedModel = new File(output, "model");
-        Serialization.serialize(wordVectorRegression, serializedModel);
-        System.out.println("model saved to"+serializedModel.getAbsolutePath());
+
+
         File reportFile = new File(output, "train_predictions.txt");
         report(wordVectorRegression, train_docstoword, reportFile);
         System.out.println("predictions on the training set are written to"+reportFile.getAbsolutePath());
     }
 
 
-    public static DataSet loadDocMatrix(String path) throws Exception{
-        DataSet dataSet = new SparseDataSet(25000, 5000, false);
+    public static DataSet loadDocMatrix(String path, Config config) throws Exception{
+        int numWords = config.getInt("numWords");
+        int numDocs = config.getInt("numDocs");
+
+        DataSet dataSet = new SparseDataSet(numDocs, numWords, false);
         try (BufferedReader br = new BufferedReader(new FileReader(path));
         ) {
             String line = null;
@@ -145,8 +154,10 @@ public class JinghanTry {
         }
         return dataSet;
     }
-    public static double[] loadlabels(String Path) throws Exception{
-        double [] labels = new double[25000];
+    public static double[] loadlabels(String Path, Config config) throws Exception{
+        int numWords = config.getInt("numWords");
+        int numDocs = config.getInt("numDocs");
+        double [] labels = new double[numDocs];
         try(BufferedReader br = new BufferedReader(new FileReader(Path))){
             String line = null;
             int lineIndex = 0;
@@ -158,8 +169,10 @@ public class JinghanTry {
             }
         return labels;
     }
-    public static double[] loadweights(String Path) throws Exception{
-        double [] weights = new double[5000];
+    public static double[] loadweights(String Path, Config config) throws Exception{
+        int numWords = config.getInt("numWords");
+        int numDocs = config.getInt("numDocs");
+        double [] weights = new double[numWords];
         try(BufferedReader br = new BufferedReader(new FileReader(Path))){
             String line = null;
             int lineIndex = 0;
@@ -171,8 +184,10 @@ public class JinghanTry {
         return weights;
     }
 
-    public static DataSet loadword2vecMatrix(String path) throws Exception{
-        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(4998).numFeatures(300).build();
+    public static DataSet loadword2vecMatrix(String path, Config config) throws Exception{
+        int numWords = config.getInt("numWords");
+        int numDocs = config.getInt("numDocs");
+        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(numWords).numFeatures(300).build();
         try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int dataIndex = 0;
@@ -191,6 +206,39 @@ public class JinghanTry {
         double [] prediction = wordVectorRegression.predict(dataSet);
         String str = PrintUtil.toMutipleLines(prediction);
         FileUtils.writeStringToFile(reportFile, str);
+    }
+
+
+    private static WordVectorRegression loadModel(Config config) throws Exception{
+        int numWords = config.getInt("numWords");
+        int numDocs = config.getInt("numDocs");
+        int completedIterations = 0;
+        String output = config.getString("output.folder");
+        String modelName = "models";
+        File folder = Paths.get(output,modelName).toFile();
+        File[] modeFiles = folder.listFiles((dir, name) -> name.startsWith("iter.") && (name.endsWith(".model")));
+        File lastFile = null;
+        int lastIter = -1;
+        for (File file: modeFiles){
+            String[] split = file.getName().split(Pattern.quote("."));
+            int iter = Integer.parseInt(split[1]);
+            if (iter>lastIter){
+                lastIter = iter;
+                lastFile = file;
+                completedIterations = lastIter;
+            }
+        }
+
+        WordVectorRegression wordVectorRegression;
+
+        if (lastIter==-1){
+            wordVectorRegression = new WordVectorRegression(numWords);
+        } else {
+            wordVectorRegression = (WordVectorRegression) Serialization.deserialize(lastFile);
+        }
+
+        System.out.println("wordVectorRegression loaded, with "+completedIterations+ " iterations completed");
+        return wordVectorRegression;
     }
 
 

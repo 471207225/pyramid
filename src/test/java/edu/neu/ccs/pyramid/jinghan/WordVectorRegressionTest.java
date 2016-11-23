@@ -22,7 +22,7 @@ public class WordVectorRegressionTest {
         vector.set(0,2);
         vector.set(1,1);
 
-        WordVectorRegression wordVectorRegression = new WordVectorRegression(wordScores);
+        WordVectorRegression wordVectorRegression = new WordVectorRegression(3);
         System.out.println(wordVectorRegression.predict(vector));
     }
 
