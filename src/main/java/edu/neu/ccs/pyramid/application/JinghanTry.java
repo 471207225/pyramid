@@ -72,7 +72,11 @@ public class JinghanTry {
 
         DataSet word2vec = loadword2vecMatrix(config.getString("input.word2vec"), config);
 
-
+        String output = config.getString("output.folder");
+        String modelName = "models";
+        File path = Paths.get(output, modelName).toFile();
+        path.mkdirs();
+        
         WordVectorRegression wordVectorRegression = loadModel(config);
         // it is essential to set mindataperleave = 0
         RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(config.getInt("train.numLeaves")).setMinDataPerLeaf(0);
@@ -85,10 +89,7 @@ public class JinghanTry {
         int numIterations = config.getInt("train.numIterations");
 
 
-        String output = config.getString("output.folder");
-        String modelName = "models";
-        File path = Paths.get(output, modelName).toFile();
-        path.mkdirs();
+
         int saveModelInterval = config.getInt("saveModelInterval");
 
         for(int i=1; i<=numIterations;i++){
