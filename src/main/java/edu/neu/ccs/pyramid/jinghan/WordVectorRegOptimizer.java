@@ -113,7 +113,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
 //            System.out.println(" ");
             wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
         }
-        System.out.println(wordVectorRegression.wordScores);
+//        System.out.println(wordVectorRegression.wordScores);
 //        System.out.println(wordVectorRegression.wordScores);
     }
 }

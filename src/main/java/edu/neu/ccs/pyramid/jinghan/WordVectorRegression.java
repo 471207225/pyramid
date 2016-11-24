@@ -14,6 +14,7 @@ import java.io.IOException;
 public class WordVectorRegression extends GradientBoosting implements Regressor {
     private static final long serialVersionUID = 1L;
     transient Vector wordScores;
+//    static Vector wordScores;
 
     public WordVectorRegression(int numWords) {
         super(1);

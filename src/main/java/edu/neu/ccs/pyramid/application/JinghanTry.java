@@ -111,7 +111,7 @@ public class JinghanTry {
             }
 
             if (i%saveModelInterval==0){
-                File serializeModel = new File(path,  "iter." + i + ".model");
+                File serializeModel = new File(path,  "iter." + wordVectorRegression.getEnsemble(0).getRegressors().size() + ".model");
                 Serialization.serialize(wordVectorRegression, serializeModel);
             }
         }
