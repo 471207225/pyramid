@@ -18,6 +18,7 @@ import edu.neu.ccs.pyramid.regression.regression_tree.RegTreeConfig;
 import edu.neu.ccs.pyramid.regression.regression_tree.RegTreeFactory;
 import edu.neu.ccs.pyramid.util.PrintUtil;
 import edu.neu.ccs.pyramid.util.Serialization;
+import edu.stanford.nlp.parser.nndep.Dataset;
 import org.apache.commons.io.FileUtils;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
@@ -45,12 +46,13 @@ public class JinghanTry3 {
     }
 
     public static void train(Config config) throws Exception{
-        DataSet word2vec = loadword2vecMatrix(config.getString("input.word2vec"));
-        double [] word2vec_labels = loadlabels(config.getString("input.word2vec_labels_train"), config);
+        DataSet trainWord2vec = loadword2vecMatrix(config.getString("input.trainWord2vec"));
+        DataSet testWord2vec = loadword2vecMatrix(config.getString("input.testWord2vec"));
+        double [] trainWord2vec_labels = loadlabels(config.getString("input.word2vec_labels_train"), config);
 
 
         DataSet train_docFeatures = loadDocMatrix(config.getString("input.train_docFeatures"), config);
-        DataSet test_docFeatures = loadDocMatrix(config.getString("input.train_docFeatures"), config);
+        DataSet test_docFeatures = loadDocMatrix(config.getString("input.test_docFeatures"), config);
 
         double [] train_docLabels = loadlabels(config.getString("input.train_docLabels"), config);
         double [] test_docLabels = loadlabels(config.getString("input.test_docLabels"), config);
@@ -63,11 +65,9 @@ public class JinghanTry3 {
         Vector teVector = new DenseVector(teArr);
 
         LSBoost lsBoost = new LSBoost();
-        WordVectorRegression wordVectorRegression_train = new WordVectorRegression(word2vec_labels.length);
-        WordVectorRegression wordVectorRegression_test = new WordVectorRegression(word2vec_labels.length);
         RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(config.getInt("train.numLeaves"));
         RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
-        LSBoostOptimizer optimizer = new LSBoostOptimizer(lsBoost, word2vec, regTreeFactory, word2vec_labels);
+        LSBoostOptimizer optimizer = new LSBoostOptimizer(lsBoost, trainWord2vec, regTreeFactory, trainWord2vec_labels);
 //        DocScore docScore_train = new DocScore(wordVectorRegression_train,train_docFeatures,word2vec_features_train,lsBoost.predict(train_docFeatures));
 //        DocScore docScore_test = new DocScore(wordVectorRegression_test, test_docFeatures, word2vec_features_test,lsBoost.predict(test_docFeatures));
         optimizer.setShrinkage(config.getDouble("train.shrinkage"));
@@ -75,14 +75,13 @@ public class JinghanTry3 {
 
         for (int iter=0;iter<config.getInt("iterations");iter++){
             optimizer.iterate();
-            DocScore docScore_train = new DocScore(wordVectorRegression_train,train_docFeatures,word2vec,lsBoost.predict(train_docFeatures));
-            DocScore docScore_test = new DocScore(wordVectorRegression_test, test_docFeatures, word2vec,lsBoost.predict(test_docFeatures));
-            System.out.println("iteration "+iter);
-            double [] train_prediction = docScore_train.docScores;
-            double [] test_prediction = docScore_test.docScores;
 
-            System.out.println("training RMSE = "+ RMSE.rmse(train_prediction, train_docLabels));
-            System.out.println("test RMSE = "+ RMSE.rmse(test_prediction, test_docLabels));
+            System.out.println("iteration "+iter);
+            LinearRegression trainLinearReg = getLinearReg(lsBoost, trainWord2vec);
+            LinearRegression testLinearReg = getLinearReg(lsBoost, testWord2vec);
+
+            System.out.println("training RMSE = "+ RMSE.rmse(trainLinearReg.predict(train_docFeatures), train_docLabels));
+            System.out.println("test RMSE = "+ RMSE.rmse(testLinearReg.predict(test_docFeatures), test_docLabels));
 
             System.out.println("excellent"+lsBoost.predict(exVector));
             System.out.println("terrible"+lsBoost.predict(teVector));
@@ -173,5 +172,16 @@ public class JinghanTry3 {
             }
         }
         return labels;
+    }
+
+    // todo deal with bias
+    private static LinearRegression getLinearReg (LSBoost lsBoost, DataSet word2Vec){
+        int numWords = word2Vec.getNumDataPoints();
+        Vector vector = new DenseVector(numWords+1);
+        for (int j=0;j<numWords;j++){
+            vector.set(j+1, lsBoost.predict(word2Vec.getRow(j)));
+        }
+        LinearRegression linearRegression = new LinearRegression(numWords, vector);
+        return linearRegression;
     }
 }
