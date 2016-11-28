@@ -91,12 +91,13 @@ public class JinghanTry3 {
             LinearRegression trainLinearReg = getLinearReg(lsBoost, trainWord2vec, config);
             LinearRegression testLinearReg = getLinearReg(lsBoost, testWord2vec, config);
 
-            System.out.println(trainLinearReg.predict(train_docFeatures).length);
-            System.out.println(train_docLabels.length);
+//            System.out.println(trainLinearReg.predict(train_docFeatures).length);
+//            System.out.println(train_docLabels.length);
+//
+//            System.out.println(testLinearReg.predict(test_docFeatures).length);
+//            System.out.println(test_docLabels.length);
 
-            System.out.println(testLinearReg.predict(test_docFeatures).length);
-            System.out.println(test_docLabels.length);
-
+            System.out.println("training weights RMSE="+RMSE.rmse(trainWord2vec_labels,lsBoost.predict(trainWord2vec)));
             System.out.println("training RMSE = "+ RMSE.rmse(trainLinearReg.predict(train_docFeatures), train_docLabels));
             System.out.println("test RMSE = "+ RMSE.rmse(testLinearReg.predict(test_docFeatures), test_docLabels));
 

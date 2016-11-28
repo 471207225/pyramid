@@ -81,7 +81,7 @@ public class JinghanTry {
         File path = Paths.get(output, modelName).toFile();
         path.mkdirs();
         
-        WordVectorRegression wordVectorRegression = loadModel(config);
+        WordVectorRegression wordVectorRegression = loadModel(config, trainWord2vec);
         // it is essential to set mindataperleave = 0
         RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(config.getInt("train.numLeaves")).setMinDataPerLeaf(0);
         RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
@@ -227,9 +227,8 @@ public class JinghanTry {
     }
 
 
-    private static WordVectorRegression loadModel(Config config) throws Exception{
-        int numWords = config.getInt("numWords");
-        int numDocs = config.getInt("numDocs");
+    private static WordVectorRegression loadModel(Config config, DataSet trainWord2Vec) throws Exception{
+        int numWords = trainWord2Vec.getNumDataPoints();
         int completedIterations = 0;
         String output = config.getString("output.folder");
         String modelName = "models";
@@ -261,9 +260,9 @@ public class JinghanTry {
 
     private static LinearRegression getLinearReg (WordVectorRegression wordVectorRegression, DataSet word2Vec, Config config){
         int numWords = word2Vec.getNumDataPoints();
-        Vector vector = new DenseVector(numWords);
+        Vector vector = new DenseVector(numWords+1);
         for (int j=0;j<numWords;j++){
-            vector.set(j, wordVectorRegression.score(word2Vec.getRow(j),0));
+            vector.set(j+1, wordVectorRegression.score(word2Vec.getRow(j),0));
         }
         LinearRegression linearRegression = new LinearRegression(numWords, vector);
         return linearRegression;
