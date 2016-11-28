@@ -77,6 +77,8 @@ public class JinghanTry2 {
         for (int j=0;j<train_docstoword.getNumFeatures();j++){
             System.out.println(train_docstoword.getFeatureList().get(j));
             System.out.println(linearRegression.getWeights().getWeightsWithoutBias().get(j));
+//            System.out.println(linearRegression.getWeights().getWeightsWithoutBias().get(j));
+            System.out.println();
         }
 
         StringBuilder sb = new StringBuilder();
@@ -84,6 +86,8 @@ public class JinghanTry2 {
             sb.append(linearRegression.getWeights().getWeightsWithoutBias().get(j));
             sb.append("\n");
         }
+        System.out.println("bias is "+ linearRegression.getWeights().getBias());
+
 
 
         FileUtils.writeStringToFile(weightReport, sb.toString());
