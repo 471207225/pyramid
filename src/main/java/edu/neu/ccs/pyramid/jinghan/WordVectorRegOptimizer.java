@@ -51,11 +51,25 @@ public class WordVectorRegOptimizer extends GBOptimizer {
     protected double[] gradient(int ensembleIndex) {
         updateDocScores();
         double[] gradient = new double[numWords];
+//        double[] gradient_newton = new double[numWords];
         for (int i=0;i<gradient.length;i++){
             gradient[i] = gradientForWord(i);
+//            gradient_newton[i] = gradientForWord_newton(i);
         }
-        System.out.println("gradient is");
-        System.out.println(Arrays.toString(gradient));
+//        System.out.println("gradient is");
+//        System.out.println(Arrays.toString(gradient));
+//        System.out.println("the angle between gradient and newton method");
+//        double sum_numerator = 0;
+//        double sum_d_gradient = 0;
+//        double sum_d_gradientNewton = 0;
+//        for(int j=0;j<numWords;j++){
+//            sum_numerator += gradient[j]*gradient_newton[j];
+//            sum_d_gradient += Math.pow(gradient[j],2);
+//            sum_d_gradientNewton += Math.pow(gradient_newton[j], 2);
+//        }
+//        double angle = sum_numerator/(Math.sqrt(sum_d_gradient)*Math.sqrt(sum_d_gradientNewton));
+//        System.out.println(angle);
+
 
         return gradient;
     }
@@ -79,22 +93,23 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         for (int i=0;i<numDocs;i++){
             sum += (docScores[i]
                     -labels[i])*doc2word.getRow(i).get(wordIndex)/numDocs;
+
         }
         return -2*sum;
     }
 
 //    // newton
-//    private double gradientForWord(int wordIndex){
+//    private double gradientForWord_newton(int wordIndex){
 //        double numerator = 0;
 //        for (int i=0;i<numDocs;i++){
 //            numerator += (labels[i]-docScores[i])*doc2word.getRow(i).get(wordIndex);
 //        }
 //
 //        return numerator/wordSumSquare[wordIndex];
+////        return -numerator/wordSumSquare[wordIndex];
 //    }
 
-    private void updateDocScores(){
-        IntStream.range(0, numDocs).parallel().forEach(this::updateDocScore);
+    private void updateDocScores(){ IntStream.range(0, numDocs).parallel().forEach(this::updateDocScore);
     }
 
     private void updateDocScore(int docIndex){

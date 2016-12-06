@@ -25,6 +25,9 @@ public class WordVectorRegression extends GradientBoosting implements Regressor 
      * @param vector document; elements are word proportions
      * @return
      */
+
+
+
     @Override
     public double predict(Vector vector) {
 

@@ -56,8 +56,6 @@ public class JinghanTry {
         DataSet trainWord2vec = loadword2vecMatrix(config.getString("input.trainWord2vec"));
         DataSet testWord2vec = loadword2vecMatrix(config.getString("input.testWord2vec"));
 
-        double [] trainWord2vec_labels = loadlabels(config.getString("input.word2vec_labels_train"), config);
-
 
         DataSet train_docFeatures = loadDocMatrix(config.getString("input.train_docFeatures"), config);
         DataSet test_docFeatures = loadDocMatrix(config.getString("input.test_docFeatures"), config);
@@ -66,7 +64,7 @@ public class JinghanTry {
         double [] train_docLabels = loadlabels(config.getString("input.train_docLabels"), config);
         double [] test_docLabels = loadlabels(config.getString("input.test_docLabels"), config);
 
-        int numWords_train = config.getInt("numWords_train");
+        int numWords_train = trainWord2vec.getNumDataPoints();
 
         double [] train_weights;
         if (config.getBoolean("useWeights")){
@@ -103,13 +101,13 @@ public class JinghanTry {
             if (config.getBoolean("train.showTrainProgress")&&(i%progressInterval==0 || i== numIterations)){
 
                 double [] train_prediction = wordVectorRegression.predict(train_docFeatures);
-                System.out.println("training prediction is");
-                System.out.println(Arrays.toString(train_prediction));
+//                System.out.println("training prediction is");
+//                System.out.println(Arrays.toString(train_prediction));
 
-                System.out.println("training RMSE = " + RMSE.rmse(train_docLabels, train_prediction));
+                System.out.println("train RMSE = " + RMSE.rmse(train_docLabels, train_prediction));
             }
             if (config.getBoolean("train.showTestProgress")&&(i%progressInterval==0 || i==numIterations)){
-                LinearRegression testLinearReg = getLinearReg(wordVectorRegression, trainWord2vec, config);
+                LinearRegression testLinearReg = getLinearReg(wordVectorRegression, testWord2vec, config);
                 double [] test_prediction = testLinearReg.predict(test_docFeatures);
                 System.out.println("test RMSE = " + RMSE.rmse(test_docLabels,test_prediction));
                 System.out.println("*******************");
@@ -158,7 +156,7 @@ public class JinghanTry {
         int numData = (int) Files.lines(Paths.get(path)).count()-1;
         int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
         DataSet dataSet = new SparseDataSet(numData, numFeatures, false);
-        try (BufferedReader br = new BufferedReader(new FileReader(path));
+        try (BufferedReader br = new BufferedReader(new FileReader(path))
         ) {
             String line = null;
             int dataIndex = 0;
@@ -201,7 +199,7 @@ public class JinghanTry {
     }
 
     public static double[] loadweights(String path, Config config) throws Exception{
-        int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
+        int numFeatures = (int) Files.lines(Paths.get(path)).count();
         double [] weights = new double[numFeatures];
         try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
