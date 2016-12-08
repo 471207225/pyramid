@@ -35,7 +35,7 @@ public class WordVecRegLoss implements Optimizable.ByGradientValue{
         this.wordScores = parameters;
     }
 
-    @Override
+
     public double getValue() {
         return IntStream.range(0, doc2word.getNumDataPoints()).parallel()
                 .mapToDouble(i->Math.pow(labels[i]-wordScores.dot(doc2word.getRow(i)),2))

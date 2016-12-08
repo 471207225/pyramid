@@ -6,6 +6,7 @@ import edu.neu.ccs.pyramid.optimization.gradient_boosting.GBOptimizer;
 import edu.neu.ccs.pyramid.optimization.gradient_boosting.GradientBoosting;
 import edu.neu.ccs.pyramid.regression.RegressorFactory;
 import edu.stanford.nlp.patterns.Data;
+import org.apache.mahout.math.Arrays;
 import org.apache.mahout.math.DenseVector;
 
 import java.util.stream.IntStream;
@@ -19,12 +20,12 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     public WordVectorRegression wordVectorRegression;
     public int numWords;
     public int numDocs;
-    public double[] labels;
+    public int[] labels;
     public double[] docScores;
     public double[] docProb;
 
     public WordVectorClaOptimizer(WordVectorRegression wordVectorRegression, RegressorFactory factory,
-                                  DataSet doc2word, DataSet word2vec, double[] labels, double[] weights) {
+                                  DataSet doc2word, DataSet word2vec, int[] labels, double[] weights) {
         super(wordVectorRegression, word2vec, factory, weights);
         this.doc2word = doc2word;
         this.wordVectorRegression = wordVectorRegression;
@@ -41,7 +42,8 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         System.out.println("initial learning rate = "+shrinkage);
         double[] gradient = gradient(0);
         // switch back to real gradient
-        WordVecRegLoss loss = new WordVecRegLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1));
+        WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1));
+//        WordVecRegLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1));
         BackTrackingLineSearcher lineSearcher = new BackTrackingLineSearcher(loss);
         lineSearcher.setInitialStepLength(shrinkage);
         BackTrackingLineSearcher.MoveInfo moveInfo = lineSearcher.moveAlongDirection(new DenseVector(searchDir));
@@ -58,8 +60,7 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         this.docScores[docIndex] = wordVectorRegression.predict(doc2word.getRow(docIndex));
     }
 
-    public void updateDocProb(){
-        IntStream.range(0, numDocs).parallel().forEach(this::updateDocProb);
+    public void updateDocProb(){IntStream.range(0, numDocs).parallel().forEach(this::updateDocProb);
     }
 
     public void updateDocProb(int docIndex){
@@ -72,10 +73,12 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         double sum = 0;
         for (int i=0; i<numDocs; i++){
             double donomi = 1+docProb[i];
+//            sum += (labels[i] - 1/donomi)*doc2word.getRow(i).get(wordIndex)/numDocs;
             sum += (labels[i] - 1/donomi)*doc2word.getRow(i).get(wordIndex);
 
         }
-        return -sum;
+
+        return sum;
     }
 
     @Override
@@ -91,6 +94,8 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         for (int i=0; i<gradient.length; i++){
             gradient[i] = gradientForWord(i);
         }
+        System.out.println("gradient is ");
+        System.out.println(Arrays.toString(gradient));
         return gradient;
     }
 
@@ -101,6 +106,13 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
     @Override
     protected void updateOthers() {
-
+        System.out.println("word scores\n");
+        for (int i=0;i<numWords;i++){
+//            System.out.println(scoreMatrix.getScoresForData(i)[0]);
+//            System.out.println(" ");
+            wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
+        }
+//        System.out.println(wordVectorRegression.wordScores);
+        System.out.println(wordVectorRegression.wordScores);
     }
 }

@@ -6,6 +6,7 @@ import edu.neu.ccs.pyramid.optimization.gradient_boosting.GBOptimizer;
 import edu.neu.ccs.pyramid.optimization.gradient_boosting.GradientBoosting;
 import edu.neu.ccs.pyramid.regression.RegressorFactory;
 import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Vector;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -22,7 +23,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
     private int numDocs;
     private double[] labels;
     private double[] docScores;
-    private double[] wordSumSquare;
+//    private double[] wordSumSquare;
 
 
     public WordVectorRegOptimizer(WordVectorRegression wordVectorRegression, RegressorFactory factory,
@@ -35,12 +36,12 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         this.numDocs = doc2word.getNumDataPoints();
         this.labels = labels;
         this.docScores = new double[numDocs];
-        this.wordSumSquare = new double[numWords];
-        for (int w=0;w<numWords;w++){
-            for (int i=0;i<numDocs;i++){
-                wordSumSquare[w] += Math.pow(doc2word.getRow(i).get(w),2);
-            }
-        }
+//        this.wordSumSquare = new double[numWords];
+//        for (int w=0;w<numWords;w++){
+//            for (int i=0;i<numDocs;i++){
+//                wordSumSquare[w] += Math.pow(doc2word.getRow(i).get(w),2);
+//            }
+//        }
     }
 
     @Override
@@ -49,13 +50,16 @@ public class WordVectorRegOptimizer extends GBOptimizer {
 
     @Override
     protected double[] gradient(int ensembleIndex) {
+        System.out.println("hello! changes");
         updateDocScores();
         double[] gradient = new double[numWords];
 //        double[] gradient_newton = new double[numWords];
-        for (int i=0;i<gradient.length;i++){
-            gradient[i] = gradientForWord(i);
-//            gradient_newton[i] = gradientForWord_newton(i);
-        }
+        IntStream.range(0, gradient.length).parallel()
+                .forEach(i->gradient[i]=gradientForWord(i));
+//        for (int i=0;i<gradient.length;i++){
+//            gradient[i] = gradientForWord(i);
+////            gradient_newton[i] = gradientForWord_newton(i);
+//        }
 //        System.out.println("gradient is");
 //        System.out.println(Arrays.toString(gradient));
 //        System.out.println("the angle between gradient and newton method");
@@ -90,24 +94,23 @@ public class WordVectorRegOptimizer extends GBOptimizer {
 
     private double gradientForWord(int wordIndex){
         double sum = 0;
-        for (int i=0;i<numDocs;i++){
-            sum += (docScores[i]
-                    -labels[i])*doc2word.getRow(i).get(wordIndex)/numDocs;
-
+        Vector column = doc2word.getColumn(wordIndex);
+        for (Vector.Element element: column.nonZeroes()){
+            int docId = element.index();
+            double proportion = element.get();
+            sum += (docScores[docId]
+                    -labels[docId])*proportion/numDocs;
         }
+//
+//
+//        for (int i=0;i<numDocs;i++){
+//            sum += (docScores[i]
+//                    -labels[i])*doc2word.getRow(i).get(wordIndex)/numDocs;
+//
+//        }
         return -2*sum;
     }
 
-//    // newton
-//    private double gradientForWord_newton(int wordIndex){
-//        double numerator = 0;
-//        for (int i=0;i<numDocs;i++){
-//            numerator += (labels[i]-docScores[i])*doc2word.getRow(i).get(wordIndex);
-//        }
-//
-//        return numerator/wordSumSquare[wordIndex];
-////        return -numerator/wordSumSquare[wordIndex];
-//    }
 
     private void updateDocScores(){ IntStream.range(0, numDocs).parallel().forEach(this::updateDocScore);
     }

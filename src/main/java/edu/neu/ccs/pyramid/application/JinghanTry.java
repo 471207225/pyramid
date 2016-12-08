@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import static edu.neu.ccs.pyramid.application.App2.report;
 
@@ -175,8 +176,11 @@ public class JinghanTry {
                     continue;
                 }
                 String [] lineEle = line.split(" ");
+
                 for (int j=0;j<dataSet.getNumFeatures();j++){
-                    dataSet.setFeatureValue(dataIndex-1, j, Double.valueOf(lineEle[j]));
+                    try {
+                        dataSet.setFeatureValue(dataIndex - 1, j, Double.valueOf(lineEle[j]));
+                    } catch (Exception e){ System.out.println(lineEle[j]);}
                 }
                 dataIndex += 1;
             }
@@ -259,9 +263,12 @@ public class JinghanTry {
     private static LinearRegression getLinearReg (WordVectorRegression wordVectorRegression, DataSet word2Vec, Config config){
         int numWords = word2Vec.getNumDataPoints();
         Vector vector = new DenseVector(numWords+1);
-        for (int j=0;j<numWords;j++){
-            vector.set(j+1, wordVectorRegression.score(word2Vec.getRow(j),0));
-        }
+        IntStream.range(0, numWords).parallel()
+                .forEach(j->vector.set(j+1, wordVectorRegression.score(word2Vec.getRow(j),0)));
+
+//        for (int j=0;j<numWords;j++){
+//            vector.set(j+1, wordVectorRegression.score(word2Vec.getRow(j),0));
+//        }
         LinearRegression linearRegression = new LinearRegression(numWords, vector);
         return linearRegression;
     }

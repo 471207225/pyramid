@@ -13,10 +13,14 @@ public class Prediction_class {
     public int[] classPred;
 
     public Prediction_class(double[] predictions, double threshold) {
+
         this.numDocs = predictions.length;
         this.prob = new double[numDocs];
         this.threshold = threshold;
         this.predictions = predictions;
+        this.classPred = new int[predictions.length];
+        updateDocProb();
+        updateDocClass();
     }
 
     public void updateDocProb(){

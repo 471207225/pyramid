@@ -34,8 +34,6 @@ import java.util.regex.Pattern;
  */
 public class JinghanTry4 {
 
-    int startIteration;
-
     public static void main(String[] args) throws Exception{
         if (args.length!=1){
             throw new IllegalArgumentException("Please specify a properties file");
@@ -54,29 +52,29 @@ public class JinghanTry4 {
         DataSet train_docFeatures = loadDocMatrix(config.getString("input.train_docFeatures"), config);
         DataSet test_docFeatures = loadDocMatrix(config.getString("input.test_docFeatures"), config);
 
-        double[] train_docLabels = loadlabels(config.getString("input.train_docLabels"), config);
-        double[] test_docLabels = loadlabels(config.getString("input.test_docLabels"), config);
+        int [] train_docLabels = loadlabels(config.getString("input.train_docLabels"), config);
+        int [] test_docLabels = loadlabels(config.getString("input.test_docLabels"), config);
 
         int numWords_train = trainWord2vec.getNumDataPoints();
 
         double[] train_weights;
         if (config.getBoolean("useWeights")) {
-            train_weights = loadweights(config.getString("input.tainWeights"), config);
+            train_weights = loadweights(config.getString("input.trainWeights"), config);
         } else {
             train_weights = new double[numWords_train];
             Arrays.fill(train_weights, 1);
         }
 
         String output = config.getString("output.folder");
-        String modelName = "model";
+        String modelName = "models";
         File path = Paths.get(output, modelName).toFile();
-        path.mkdir();
+        path.mkdirs();
 
         WordVectorRegression wordVectorRegression = loadModel(config, trainWord2vec).getFirst();
         int interationStart = loadModel(config, trainWord2vec).getSecond();
         RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(config.getInt("train.numLeaves")).setMinDataPerLeaf(0);
-        RegTreeFactory regTressFactory = new RegTreeFactory(regTreeConfig);
-        WordVectorClaOptimizer optimizer = new WordVectorClaOptimizer(wordVectorRegression, regTressFactory, train_docFeatures, trainWord2vec, train_docLabels, train_weights);
+        RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
+        WordVectorClaOptimizer optimizer = new WordVectorClaOptimizer(wordVectorRegression, regTreeFactory, train_docFeatures, trainWord2vec, train_docLabels, train_weights);
         optimizer.setShrinkage(config.getDouble("train.shrinkage"));
         optimizer.initialize();
         double threshold = config.getDouble("threshold");
@@ -89,21 +87,29 @@ public class JinghanTry4 {
             int iteration_num = i + interationStart;
             System.out.println("iteration" + iteration_num);
             optimizer.iterate();
+            int size = wordVectorRegression.getEnsemble(0).getRegressors().size();
+//            // print tree
+//            System.out.println(wordVectorRegression.getEnsemble(0).get(size-1));
             if (config.getBoolean("train.showTrainProgress") && (i % progressInterval == 0 || i == numIterations)) {
                 double[] train_prediction_score = wordVectorRegression.predict(train_docFeatures);
-
+                System.out.println("training prediction score is ");
+                System.out.println(Arrays.toString(train_prediction_score));
                 Prediction_class prediction_class_train = new Prediction_class(train_prediction_score, threshold);
+//                System.out.println("training prediction for probability is ");
+//                System.out.println(Arrays.toString(prediction_class_train.prob));
                 int[] train_prediciton_class = prediction_class_train.classPred;
-                int[] train_docLabels_int = dToint(train_docLabels);
-                System.out.println("training accuracy = " + Accuracy.accuracy(train_docLabels_int, train_prediciton_class));
+//                int[] train_docLabels_int = dToint(train_docLabels);
+                System.out.println("training accuracy = " + Accuracy.accuracy(train_docLabels, train_prediciton_class));
             }
             if (config.getBoolean("train.showTestProgress") && (i % progressInterval == 0 || i == numIterations)) {
                 LinearRegression testLinearReg = getLinearReg(wordVectorRegression, testWord2vec);
                 double[] test_prediction_score = testLinearReg.predict(test_docFeatures);
+//                System.out.println("testing prediction score");
+//                System.out.println(Arrays.toString(test_prediction_score));
                 Prediction_class prediction_class_test = new Prediction_class(test_prediction_score, threshold);
                 int[] test_prediction_class = prediction_class_test.classPred;
-                int[] test_docLabels_int = dToint(test_docLabels);
-                System.out.println("testing accuaray = " + Accuracy.accuracy(test_docLabels_int, test_prediction_class));
+//                int[] test_docLabels_int = dToint(test_docLabels);
+                System.out.println("testing accuaray = " + Accuracy.accuracy(test_docLabels, test_prediction_class));
             }
 
             if (i % saveModelInterval == 0) {
@@ -188,14 +194,15 @@ public class JinghanTry4 {
         return weights;
     }
 
-    public static double[] loadlabels(String path, Config config) throws Exception{
+    public static int[] loadlabels(String path, Config config) throws Exception{
         int numData = (int) Files.lines(Paths.get(path)).count();
-        double [] labels = new double[numData];
+        int [] labels = new int[numData];
         try(BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int lineIndex = 0;
             while((line = br.readLine())!=null){
                 labels[lineIndex] = Integer.parseInt(line);
+//                labels[lineIndex] = Double.parseDouble(line);
                 lineIndex += 1;
             }
         }
