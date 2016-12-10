@@ -8,6 +8,7 @@ import edu.neu.ccs.pyramid.regression.RegressorFactory;
 import edu.stanford.nlp.patterns.Data;
 import org.apache.mahout.math.Arrays;
 import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Vector;
 
 import java.util.stream.IntStream;
 
@@ -71,12 +72,22 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
     public double gradientForWord(int wordIndex){
         double sum = 0;
-        for (int i=0; i<numDocs; i++){
-            double donomi = 1+docProb[i];
-//            sum += (labels[i] - 1/donomi)*doc2word.getRow(i).get(wordIndex)/numDocs;
-            sum += (labels[i] - 1/donomi)*doc2word.getRow(i).get(wordIndex);
+//        for (int i=0; i<numDocs; i++){
+
+////            sum += (labels[i] - 1/donomi)*doc2word.getRow(i).get(wordIndex)/numDocs;
+//            sum += (labels[i] - 1/donomi)*doc2word.getRow(i).get(wordIndex);
+        Vector column = doc2word.getColumn(wordIndex);
+        for (Vector.Element element: column.nonZeroes()){
+
+            int docId = element.index();
+            double proportion = element.get();
+            double donomi = 1+docProb[docId];
+            sum += (labels[docId] - 1/donomi)*proportion/numDocs;
+
 
         }
+
+
 
         return sum;
     }
@@ -91,11 +102,13 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         updateDocScores();
         updateDocProb();
         double[] gradient = new double[numWords];
-        for (int i=0; i<gradient.length; i++){
-            gradient[i] = gradientForWord(i);
-        }
-        System.out.println("gradient is ");
-        System.out.println(Arrays.toString(gradient));
+//        for (int i=0; i<gradient.length; i++){
+//            gradient[i] = gradientForWord(i);
+//        }
+//        System.out.println("gradient is ");
+//        System.out.println(Arrays.toString(gradient));
+        IntStream.range(0, gradient.length).parallel()
+                .forEach(i->gradient[i]=gradientForWord(i));
         return gradient;
     }
 
@@ -113,6 +126,6 @@ public class WordVectorClaOptimizer extends GBOptimizer {
             wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
         }
 //        System.out.println(wordVectorRegression.wordScores);
-        System.out.println(wordVectorRegression.wordScores);
+//        System.out.println(wordVectorRegression.wordScores);
     }
 }

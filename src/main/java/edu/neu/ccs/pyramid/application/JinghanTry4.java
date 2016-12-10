@@ -19,6 +19,7 @@ import edu.neu.ccs.pyramid.util.PrintUtil;
 import edu.neu.ccs.pyramid.util.Serialization;
 import org.apache.commons.io.FileUtils;
 import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Vector;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 /**
  * Created by jinghanyang on 12/4/16.
@@ -242,10 +244,16 @@ public class JinghanTry4 {
 
     private static LinearRegression getLinearReg (WordVectorRegression wordVectorRegression, DataSet word2Vec){
         int numWords = word2Vec.getNumDataPoints();
-        org.apache.mahout.math.Vector vector = new DenseVector(numWords+1);
-        for (int j=0;j<numWords;j++){
-            vector.set(j+1, wordVectorRegression.score(word2Vec.getRow(j),0));
-        }
+        Vector vector = new DenseVector(numWords+1);
+//
+//        for (int j=0;j<numWords;j++){
+//            vector.set(j+1, wordVectorRegression.score(word2Vec.getRow(j),0));
+//        }
+
+        IntStream.range(0, numWords).parallel()
+                .forEach(j->vector.set(j+1, wordVectorRegression.score(word2Vec.getRow(j),0)));
+
+
         LinearRegression linearRegression = new LinearRegression(numWords, vector);
         return linearRegression;
     }
