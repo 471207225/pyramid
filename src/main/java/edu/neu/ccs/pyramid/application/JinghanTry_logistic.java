@@ -40,18 +40,12 @@ public class JinghanTry_logistic {
         double variance = config.getDouble("variance");
         LogisticRegression logisticRegression = new LogisticRegression(config.getInt("numClass"), train_docFeatures.getNumFeatures());
         RidgeLogisticOptimizer optimizer = new RidgeLogisticOptimizer(logisticRegression,train_docFeatures,train_docLabels,variance,true);
-//        optimizer.getOptimizer().getTerminator().setMaxIteration(config.getInt("iterations")).setMode(Terminator.Mode.STANDARD);
-//        optimizer.optimize();
-//
-//        System.out.println("train acc = " + Accuracy.accuracy(train_docLabels, logisticRegression.predict(train_docFeatures)));
-//        System.out.println("test acc = " + Accuracy.accuracy(test_docLabels, logisticRegression.predict(test_docFeatures)));
-        int numIterations = config.getInt("iterations");
-        for(int i =1; i<= numIterations; i++){
-            optimizer.optimize();
-            System.out.println("iteration" + i);
-            System.out.println("train acc = " + Accuracy.accuracy(train_docLabels, logisticRegression.predict(train_docFeatures)));
-            System.out.println("test acc = " + Accuracy.accuracy(test_docLabels, logisticRegression.predict(test_docFeatures)));
-        }
+        optimizer.getOptimizer().getTerminator().setMaxIteration(config.getInt("iterations")).setMode(Terminator.Mode.STANDARD);
+        optimizer.optimize();
+
+        System.out.println("train acc = " + Accuracy.accuracy(train_docLabels, logisticRegression.predict(train_docFeatures)));
+        System.out.println("test acc = " + Accuracy.accuracy(test_docLabels, logisticRegression.predict(test_docFeatures)));
+
 //        new File(config.getString("outPath_weights")).mkdir();
 //        File weightReport = new File(config.getString("outPath_weights")+"/weights.txt");
 //        System.out.println(optimizer.getOptimizer().getTerminator().getHistory());

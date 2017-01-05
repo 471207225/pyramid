@@ -102,8 +102,8 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
         double los = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
                 .mapToDouble(i->(KLDivergence.klGivenPLogQ(targetDistribution[i],logEstimatedDistribution[i]))).average().getAsDouble();
 
-        System.out.println("loss is ");
-        System.out.println(los);
+//        System.out.println("loss is ");
+//        System.out.println(los);
         return los;
 
     }

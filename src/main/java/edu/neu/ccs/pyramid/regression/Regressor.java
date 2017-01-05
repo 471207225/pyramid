@@ -13,6 +13,7 @@ import java.util.stream.IntStream;
  */
 public interface Regressor extends Serializable {
     double predict(Vector vector);
+//    double predict(Vector vector, double bias);
     FeatureList getFeatureList();
     default double[] predict(DataSet dataSet){
         return IntStream.range(0, dataSet.getNumDataPoints()).parallel().

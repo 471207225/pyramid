@@ -24,9 +24,12 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     public int[] labels;
     public double[] docScores;
     public double[] docProb;
+    public double bias;
+    public double shrinkageTuned;
+    public double lam;
 
     public WordVectorClaOptimizer(WordVectorRegression wordVectorRegression, RegressorFactory factory,
-                                  DataSet doc2word, DataSet word2vec, int[] labels, double[] weights) {
+                                  DataSet doc2word, DataSet word2vec, int[] labels, double[] weights, double bias, double lam) {
         super(wordVectorRegression, word2vec, factory, weights);
         this.doc2word = doc2word;
         this.wordVectorRegression = wordVectorRegression;
@@ -35,6 +38,8 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         this.labels = labels;
         this.docScores = new double[numDocs];
         this.docProb = new double[numDocs];
+        this.bias = bias;
+        this.lam = lam;
     }
 
 
@@ -50,6 +55,7 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         BackTrackingLineSearcher.MoveInfo moveInfo = lineSearcher.moveAlongDirection(new DenseVector(searchDir));
         double learningRate = moveInfo.getStepLength();
         System.out.println("tuned learning rate = "+learningRate);
+        this.shrinkageTuned = learningRate;
         return learningRate;
     }
 
@@ -58,7 +64,7 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     }
 
     public void updateDocScores(int docIndex){
-        this.docScores[docIndex] = wordVectorRegression.predict(doc2word.getRow(docIndex));
+        this.docScores[docIndex] = wordVectorRegression.predict(doc2word.getRow(docIndex))+bias;
     }
 
     public void updateDocProb(){IntStream.range(0, numDocs).parallel().forEach(this::updateDocProb);
@@ -82,8 +88,10 @@ public class WordVectorClaOptimizer extends GBOptimizer {
             int docId = element.index();
             double proportion = element.get();
             double donomi = 1+docProb[docId];
-            sum += (labels[docId] - 1/donomi)*proportion/numDocs;
-
+            // average
+//            sum += (labels[docId] - 1/donomi)*proportion/numDocs;
+            // without average
+            sum += (labels[docId] - 1/donomi)*proportion;
 
         }
 
@@ -125,7 +133,12 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 //            System.out.println(" ");
             wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
         }
+        bias += gradientForBias();
 //        System.out.println(wordVectorRegression.wordScores);
 //        System.out.println(wordVectorRegression.wordScores);
     }
+    public double gradientForBias(){
+        return -(1+lam*bias);
+    }
+
 }

@@ -11,37 +11,42 @@ public class Node implements Serializable {
     /**
      * id of the node
      */
-    private int id;
+    public int id;
 
     /**
      * output value of the node
      */
-    private double value;
+    public double value;
     /**
      * the feature for split
      */
-    private int featureIndex;
+    public int featureIndex;
     /**
      * the threshold for split
      */
-    private double threshold;
-    private Node leftChild;
-    private Node rightChild;
-    private double reduction;
-    private boolean leaf;
-    private Node parent;
-    private boolean splitable;
+    public double threshold;
+    public Node leftChild;
+    public Node rightChild;
+    public double reduction;
+    public boolean leaf;
+    public Node parent;
+    public boolean splitable;
 
     /**
      * for missing values
      * the probability of falling into the left child
      */
-    private double leftProb;
+    public double leftProb;
+
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
+
     /**
      * for missing values
      * the probability of falling into the right child
      */
-    private double rightProb;
+     double rightProb;
 
 
     //todo this should be transient? maybe doesn't matter as it is cleaned
@@ -165,7 +170,7 @@ public class Node implements Serializable {
         this.rightProb = rightProb;
     }
 
-    int getId() {
+    public int getId() {
         return id;
     }
 

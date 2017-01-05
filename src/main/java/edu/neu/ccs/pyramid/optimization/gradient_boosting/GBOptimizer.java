@@ -6,15 +6,17 @@ import edu.neu.ccs.pyramid.dataset.ScoreMatrix;
 import edu.neu.ccs.pyramid.regression.Regressor;
 import edu.neu.ccs.pyramid.regression.RegressorFactory;
 import edu.neu.ccs.pyramid.regression.regression_tree.RegressionTree;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.mahout.math.Vector;
 
+import java.io.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
  * Created by chengli on 10/1/15.
  */
-public abstract class GBOptimizer {
+public abstract class GBOptimizer implements Serializable{
     protected ScoreMatrix scoreMatrix;
 
     protected GradientBoosting boosting;
@@ -23,17 +25,21 @@ public abstract class GBOptimizer {
     protected double[] weights;
     protected boolean isInitialized;
     protected double shrinkage = 1;
+    public Regressor regressor_original = null;
+    public double[] gradients;
+    public static final long serialVersionUID = 1L;
 
 
-    protected GBOptimizer(GradientBoosting boosting, DataSet dataSet,  RegressorFactory factory, double[] weights) {
+    protected GBOptimizer(GradientBoosting boosting, DataSet dataSet, RegressorFactory factory, double[] weights) {
         this.boosting = boosting;
         this.factory = factory;
         this.dataSet = dataSet;
         this.weights = weights;
+//        this.regressor = fitRegressor(0);
         boosting.featureList = dataSet.getFeatureList();
     }
 
-    protected GBOptimizer(GradientBoosting boosting, DataSet dataSet,  RegressorFactory factory){
+    protected GBOptimizer(GradientBoosting boosting, DataSet dataSet,RegressorFactory factory){
         this(boosting, dataSet, factory, defaultWeights(dataSet.getNumDataPoints()));
     }
 
@@ -64,6 +70,9 @@ public abstract class GBOptimizer {
 
     protected Regressor fitRegressor(int ensembleIndex){
         double[] gradients = gradient(ensembleIndex);
+        this.gradients = gradients;
+
+
 //        System.out.println("fitting ");
 //        System.out.println("data set = "+dataSet);
 //        System.out.println("gradients = "+Arrays.toString(gradients));
@@ -104,6 +113,27 @@ public abstract class GBOptimizer {
         }
         for (int k=0;k<boosting.getNumEnsembles();k++){
             Regressor regressor = fitRegressor(k);
+
+
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream out = null;
+            try {
+                out = new ObjectOutputStream(bos);
+                out.writeObject(regressor);
+
+                //De-serialization of object
+                ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+                ObjectInputStream in = new ObjectInputStream(bis);
+                Regressor copied = (Regressor) in.readObject();
+                this.regressor_original = copied;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+
+
+//            System.out.println("regressor = "+regressor);
             double[] searchDir = regressor.predict(dataSet);
             shrink(regressor, searchDir);
 //            System.out.println("regressor = "+regressor);
@@ -131,6 +161,7 @@ public abstract class GBOptimizer {
      * e.g. probability matrix
      */
     protected abstract void updateOthers();
+
 
 
     public void setShrinkage(double shrinkage) {

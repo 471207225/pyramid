@@ -5,15 +5,15 @@ import edu.neu.ccs.pyramid.dataset.DataSet;
 import edu.neu.ccs.pyramid.dataset.DataSetBuilder;
 import edu.neu.ccs.pyramid.dataset.SparseDataSet;
 import edu.neu.ccs.pyramid.eval.Accuracy;
-import edu.neu.ccs.pyramid.eval.RMSE;
 import edu.neu.ccs.pyramid.feature.Feature;
 import edu.neu.ccs.pyramid.feature.FeatureList;
-import edu.neu.ccs.pyramid.jinghan.Prediction_class;
-import edu.neu.ccs.pyramid.jinghan.WordVectorClaOptimizer;
-import edu.neu.ccs.pyramid.jinghan.WordVectorRegression;
+import edu.neu.ccs.pyramid.jinghan.*;
+import edu.neu.ccs.pyramid.optimization.gradient_boosting.Ensemble;
+import edu.neu.ccs.pyramid.regression.Regressor;
 import edu.neu.ccs.pyramid.regression.linear_regression.LinearRegression;
 import edu.neu.ccs.pyramid.regression.regression_tree.RegTreeConfig;
 import edu.neu.ccs.pyramid.regression.regression_tree.RegTreeFactory;
+import edu.neu.ccs.pyramid.regression.regression_tree.RegressionTree;
 import edu.neu.ccs.pyramid.util.Pair;
 import edu.neu.ccs.pyramid.util.PrintUtil;
 import edu.neu.ccs.pyramid.util.Serialization;
@@ -21,21 +21,20 @@ import org.apache.commons.io.FileUtils;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 /**
- * Created by jinghanyang on 12/4/16.
+ * Created by jinghanyang on 12/20/16.
  */
-public class JinghanTry4 {
-
+public class Jinghan_dummyLog {
     public static void main(String[] args) throws Exception{
         if (args.length!=1){
             throw new IllegalArgumentException("Please specify a properties file");
@@ -58,6 +57,8 @@ public class JinghanTry4 {
         int [] test_docLabels = loadlabels(config.getString("input.test_docLabels"), config);
 
         int numWords_train = trainWord2vec.getNumDataPoints();
+        double bias = config.getDouble("bias");
+        double lam = config.getDouble("lam");
 
         double[] train_weights;
         if (config.getBoolean("useWeights")) {
@@ -76,7 +77,7 @@ public class JinghanTry4 {
         int interationStart = loadModel(config, trainWord2vec).getSecond();
         RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(config.getInt("train.numLeaves")).setMinDataPerLeaf(0);
         RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
-        WordVectorClaOptimizer optimizer = new WordVectorClaOptimizer(wordVectorRegression, regTreeFactory, train_docFeatures, trainWord2vec, train_docLabels, train_weights);
+        WordVectorClaOptimizer optimizer = new WordVectorClaOptimizer(wordVectorRegression, regTreeFactory, train_docFeatures, trainWord2vec, train_docLabels, train_weights, bias, lam);
         optimizer.setShrinkage(config.getDouble("train.shrinkage"));
         optimizer.initialize();
         double threshold = config.getDouble("threshold");
@@ -93,9 +94,77 @@ public class JinghanTry4 {
 //            // print tree
 //            System.out.println(wordVectorRegression.getEnsemble(0).get(size-1));
             if (config.getBoolean("train.showTrainProgress") && (i % progressInterval == 0 || i == numIterations)) {
+                Ensemble ensemble = wordVectorRegression.getEnsemble(0);
+
+                Regressor regressor_original = optimizer.regressor_original;
+                Regressor regressor_shrunk = ensemble.get(iteration_num-1);
+                RegressionTree regressionTree = (RegressionTree) regressor_shrunk;
+                List<List<Integer>> wordIDs = new ArrayList<List<Integer>>();
+                List<List<Integer>> dummyIDs = new ArrayList<List<Integer>>();
+                List<List<Integer>> dummyFeaturesInd = new ArrayList<List<Integer>>();
+                List<Integer> leafIDs = new ArrayList<Integer>();
+                for (int itr=0; itr<trainWord2vec.getNumDataPoints(); itr++){
+                    TreeInfo treeInfo = new TreeInfo(regressionTree, trainWord2vec.getRow(itr));
+                    wordIDs.add(treeInfo.wordVecIds);
+                    dummyIDs.add(treeInfo.dummyIds);
+                    dummyFeaturesInd.add(treeInfo.dummyFeatureIndexes);
+                    leafIDs.add(treeInfo.leafId);
+                }
+                LeafNodeCount leafNodeCount = new LeafNodeCount(leafIDs);
+                Map<Integer, List<Integer>> map_count = leafNodeCount.map;
+                for (Integer name: map_count.keySet()){
+                    String key = name.toString();
+                    String value = map_count.get(name).toString();
+                    int leafCount = map_count.get(name).size();
+
+                }
+
                 double[] train_prediction_score = wordVectorRegression.predict(train_docFeatures);
-                System.out.println("training prediction score is ");
-                System.out.println(Arrays.toString(train_prediction_score));
+                double[] gradients = optimizer.gradients;
+                ArrayIndexComparator comparator = new ArrayIndexComparator(gradients);
+                Integer[] indexes = comparator.createIndexArray();
+                Arrays.sort(indexes, comparator);
+
+                FeatureList wordNames = train_docFeatures.getFeatureList();
+                double[] predictGradient_shrunk = regressor_shrunk.predict(trainWord2vec);
+                int checkNum = 100;
+                double shrinkage_tuned = optimizer.shrinkageTuned;
+                if(i%3==0){
+                    try{
+                        PrintWriter writer = new PrintWriter(config.getString("res.path")+"/"+i+ ".txt", "UTF-8");
+                        writer.println("skrinkage "+shrinkage_tuned);
+                        for (int ind_checkWord = 0; ind_checkWord<checkNum; ind_checkWord++) {
+                            int wordInd_write = indexes[ind_checkWord];
+
+                            // get dummy feature indexes for this word
+                            List<Integer> dummyFeaturesInd_word = dummyFeaturesInd.get(wordInd_write);
+                            List<String> dummyFeaturesName_word = new  ArrayList<String>();
+                            for (int ind_featureName=0; ind_featureName<dummyFeaturesInd_word.size(); ind_featureName++){
+                                int wordIdIndex = dummyFeaturesInd_word.get(ind_featureName);
+                                System.out.println(wordNames.get(wordIdIndex-300).toString());
+                                dummyFeaturesName_word.add(wordNames.get(wordIdIndex-300).getName());
+                            }
+                            String dummyFeaturesName_word_string = dummyFeaturesName_word.toString();
+                            String wvfeatures = wordIDs.get(wordInd_write).toString();
+                            String dyfeatures = "noDummy";
+                            if (!dummyIDs.get(wordInd_write).isEmpty()) {
+                                dyfeatures = dummyIDs.get(wordInd_write).toString();
+                            }
+                            int lfID = leafIDs.get(wordInd_write);
+                            int dataCount = map_count.get(lfID).size();
+                            writer.println("");
+                            writer.println(" word: \""+ wordNames.get(wordInd_write).getName()+ " \" \t weight "+ train_weights[wordInd_write] +" \t target gradient: " + gradients[wordInd_write]*shrinkage_tuned + " \t shrunked predict gradient: " +
+                                    predictGradient_shrunk[wordInd_write]
+                                    +" \t leaf ID: " + lfID+" \t wv path features: " + wvfeatures + " \t wordID path features: " + dyfeatures+ " \t wordID features "+dummyFeaturesName_word_string+ " \t data count: "+ dataCount );
+                        }
+
+                        writer.close();
+                    } catch (IOException e) {
+                        // do something
+                    }
+                }
+//                System.out.println("training prediction score is ");
+//                System.out.println(Arrays.toString(train_prediction_score));
                 Prediction_class prediction_class_train = new Prediction_class(train_prediction_score, threshold);
 //                System.out.println("training prediction for probability is ");
 //                System.out.println(Arrays.toString(prediction_class_train.prob));
@@ -133,22 +202,22 @@ public class JinghanTry4 {
     }
 
     public static DataSet loadword2vecMatrix(String path) throws Exception{
+
         int numData = (int) Files.lines(Paths.get(path)).count();
         int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
-
-        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(numData).numFeatures(numFeatures).build();
-        try(BufferedReader br = new BufferedReader(new FileReader(path))){
+        DataSet dataSet = new SparseDataSet(numData, numFeatures,false);
+        try (BufferedReader br = new BufferedReader(new FileReader(path))){
             String line = null;
             int dataIndex = 0;
             while ((line = br.readLine())!=null){
                 String [] lineEle = line.split(" ");
-                for (int j=0; j<denseDataSet.getNumFeatures(); j++){
-                    denseDataSet.setFeatureValue(dataIndex, j, Double.parseDouble(lineEle[j]));
+                for (int j=0; j<numFeatures; j++){
+                    dataSet.setFeatureValue(dataIndex,j,Double.valueOf(lineEle[j]));
                 }
-                dataIndex +=1;
+                dataIndex += 1;
             }
+            return dataSet;
         }
-        return denseDataSet;
     }
 
     public static DataSet loadDocMatrix(String path, Config config) throws Exception{
@@ -231,9 +300,9 @@ public class JinghanTry4 {
         }
 
         WordVectorRegression wordVectorRegression;
-
+        double bias = config.getDouble("bias");
         if (lastIter==-1){
-            wordVectorRegression = new WordVectorRegression(numWords);
+            wordVectorRegression = new WordVectorRegression(numWords, bias);
         }else {
             wordVectorRegression = (WordVectorRegression) Serialization.deserialize(lastFile);
         }

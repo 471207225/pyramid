@@ -13,11 +13,14 @@ import java.io.IOException;
  */
 public class WordVectorRegression extends GradientBoosting implements Regressor {
     private static final long serialVersionUID = 1L;
-    transient Vector wordScores;
+    public Vector wordScores;
+    public double bias;
+
 //    static Vector wordScores;
 
-    public WordVectorRegression(int numWords) {
+    public WordVectorRegression(int numWords, double bias) {
         super(1);
+        this.bias = bias;
         this.wordScores = new DenseVector(numWords);
     }
     /**
@@ -32,6 +35,10 @@ public class WordVectorRegression extends GradientBoosting implements Regressor 
     public double predict(Vector vector) {
 
         return vector.dot(wordScores);
+    }
+
+    public double predict_addBias(Vector vector){
+        return vector.dot(wordScores) + bias;
     }
 
     @Override
