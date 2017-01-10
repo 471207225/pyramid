@@ -33,7 +33,10 @@ public class WordVectorRegression extends GradientBoosting implements Regressor 
 
     @Override
     public double predict(Vector vector) {
-
+//        System.out.println("word scores");
+//        System.out.println(wordScores.toString());
+//        System.out.println("data point");
+//        System.out.println(vector.toString());
         return vector.dot(wordScores);
     }
 

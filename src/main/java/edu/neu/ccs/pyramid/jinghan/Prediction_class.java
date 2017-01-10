@@ -15,27 +15,37 @@ public class Prediction_class {
     public Prediction_class(double[] predictions, double threshold) {
 
         this.numDocs = predictions.length;
-        this.prob = new double[numDocs];
         this.threshold = threshold;
         this.predictions = predictions;
+        this.prob = new double[numDocs];
         this.classPred = new int[predictions.length];
-        updateDocProb();
+
+
+//        System.out.println("prediction is");
+//        for(int i=0; i<10; i++){
+//            System.out.println(predictions[i]);
+//        }
+
+
+        updateProb();
         updateDocClass();
+
     }
 
-    public void updateDocProb(){
-        IntStream.range(0, numDocs).parallel().forEach(this::updateDocProb);
+    public void updateProb(){
+        IntStream.range(0, numDocs).parallel().forEach(this::updateProb);
     }
 
-    public void updateDocProb(int docIndex){
-        double donominator = Math.exp(-predictions[docIndex])+1;
-        this.prob[docIndex] = 1/donominator;
+    public void updateProb(int docIndex){
+        this.prob[docIndex] = 1/(1+Math.exp(-predictions[docIndex]));
     }
 
 
     public void updateDocClass(int docIndex){
         if(prob[docIndex] >= threshold){
             this.classPred[docIndex] = 1;
+        }else {
+            this.classPred[docIndex] = 0;
         }
     }
 

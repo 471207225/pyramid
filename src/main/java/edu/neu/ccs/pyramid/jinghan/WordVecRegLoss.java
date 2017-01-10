@@ -47,7 +47,7 @@ public class WordVecRegLoss implements Optimizable.ByGradientValue{
         double part1 = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
                 .mapToDouble(i->Math.pow(labels[i]-wordScores.dot(doc2word.getRow(i)),2)).sum()/2;
         double part2 = IntStream.range(0, doc2word.getNumFeatures()).parallel().mapToDouble(i->Math.pow(wordScores.get(i),2)).sum();
-        part2 = (part2+ Math.pow(bias,2))*lam/2;
+        part2 = part2*lam/2;
         return part1+ part2;
     }
 

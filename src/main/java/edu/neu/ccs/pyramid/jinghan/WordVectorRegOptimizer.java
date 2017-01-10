@@ -78,12 +78,12 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         System.out.println("initial learning rate = "+shrinkage);
 //        double[] gradient = gradient(0);
         double bias = gradientForBias();
-        double[] gradient_addbias = new double[numWords+1];
+//        double[] gradient_addbias = new double[numWords+1];
         double[] gradient = gradient(0);
 //
-        IntStream.range(0,numWords).parallel().forEach(i->gradient_addbias[i]=gradient[i]);
-        gradient_addbias[numWords] = bias;
-        WordVecRegLoss loss = new WordVecRegLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient_addbias).times(-1), bias, lam) ;
+//        IntStream.range(0,numWords).parallel().forEach(i->gradient_addbias[i]=gradient[i]);
+//        gradient_addbias[numWords] = bias;
+        WordVecRegLoss loss = new WordVecRegLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1), bias, lam) ;
 
 //        System.out.println("excellent gradient is" + gradient[3206]);
         // switch back to real gradient
@@ -113,11 +113,12 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         }
         sum += lam*wordVectorRegression.wordScores.get(wordIndex);
 //        return -2*sum;
-        return -sum;
+        return -sum/numDocs;
     }
 
     public double gradientForBias(){
-        return -(1+lam*bias);
+        return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
+        docScores[i])).sum();
     }
 
 
@@ -134,7 +135,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
 
     @Override
     protected void updateOthers() {
-        System.out.println("word scores\n");
+//        System.out.println("word scores\n");
         for (int i=0;i<numWords;i++){
 //            System.out.println(scoreMatrix.getScoresForData(i)[0]);
 //            System.out.println(" ");
@@ -144,7 +145,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
 //        System.out.println(wordVectorRegression.wordScores);
 
             System.out.println("bias is ");
-            bias += gradientForBias();
+            bias += shrinkageTuned*gradientForBias();
             System.out.println(bias);
     }
 

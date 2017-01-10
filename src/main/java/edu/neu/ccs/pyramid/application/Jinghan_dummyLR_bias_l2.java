@@ -223,7 +223,7 @@ public class Jinghan_dummyLR_bias_l2 {
                             List<String> dummyFeaturesName_word = new  ArrayList<String>();
                             for (int ind_featureName=0; ind_featureName<dummyFeaturesInd_word.size(); ind_featureName++){
                                 int wordIdIndex = dummyFeaturesInd_word.get(ind_featureName);
-                                System.out.println(wordNames.get(wordIdIndex-300).toString());
+//                                System.out.println(wordNames.get(wordIdIndex-300).toString());
                                 dummyFeaturesName_word.add(wordNames.get(wordIdIndex-300).getName());
                             }
                             String dummyFeaturesName_word_string = dummyFeaturesName_word.toString();
@@ -325,49 +325,14 @@ public class Jinghan_dummyLR_bias_l2 {
 //
 //        return denseDataSet;
 //    }
-    public static DataSet loadDocMatrix(String path, Config config) throws Exception{
-        int numData = (int) Files.lines(Paths.get(path)).count()-1;
-        int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
 
-        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(numData).numFeatures(numFeatures).build();
-        try (BufferedReader br = new BufferedReader(new FileReader(path))
-        ) {
-            String line = null;
-            int dataIndex = 0;
-            while ((line = br.readLine()) != null) {
 
-                if(dataIndex == 0){
-                    dataIndex += 1;
-                    String[] featureNames = line.split(" ");
-                    FeatureList featureList = new FeatureList();
-                    for (String featureName: featureNames){
-                        Feature feature = new Feature();
-                        feature.setName(featureName);
-                        featureList.add(feature);
-                    }
-                    denseDataSet.setFeatureList(featureList);
-                    continue;
-                }
-                String [] lineEle = line.split(" ");
 
-                for (int j=0;j<denseDataSet.getNumFeatures();j++){
-                    try {
-                        denseDataSet.setFeatureValue(dataIndex - 1, j, Double.valueOf(lineEle[j]));
-                    } catch (Exception e){ System.out.println(lineEle[j]);}
-                }
-                dataIndex += 1;
-            }
-        }
-        return denseDataSet;
-    }
-
-    /*
-    load sparse word matirx
-     */
 //    public static DataSet loadDocMatrix(String path, Config config) throws Exception{
 //        int numData = (int) Files.lines(Paths.get(path)).count()-1;
 //        int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
-//        DataSet dataSet = new SparseDataSet(numData, numFeatures, false);
+//
+//        DataSet denseDataSet = DataSetBuilder.getBuilder().numDataPoints(numData).numFeatures(numFeatures).build();
 //        try (BufferedReader br = new BufferedReader(new FileReader(path))
 //        ) {
 //            String line = null;
@@ -383,21 +348,60 @@ public class Jinghan_dummyLR_bias_l2 {
 //                        feature.setName(featureName);
 //                        featureList.add(feature);
 //                    }
-//                    dataSet.setFeatureList(featureList);
+//                    denseDataSet.setFeatureList(featureList);
 //                    continue;
 //                }
 //                String [] lineEle = line.split(" ");
 //
-//                for (int j=0;j<dataSet.getNumFeatures();j++){
+//                for (int j=0;j<denseDataSet.getNumFeatures();j++){
 //                    try {
-//                        dataSet.setFeatureValue(dataIndex - 1, j, Double.valueOf(lineEle[j]));
+//                        denseDataSet.setFeatureValue(dataIndex - 1, j, Double.valueOf(lineEle[j]));
 //                    } catch (Exception e){ System.out.println(lineEle[j]);}
 //                }
 //                dataIndex += 1;
 //            }
 //        }
-//        return dataSet;
+//        return denseDataSet;
 //    }
+
+    /*
+    load sparse word matirx
+     */
+    public static DataSet loadDocMatrix(String path, Config config) throws Exception{
+        int numData = (int) Files.lines(Paths.get(path)).count()-1;
+        int numFeatures = Files.lines(Paths.get(path)).findFirst().get().split(" ").length;
+        DataSet dataSet = new SparseDataSet(numData, numFeatures, false);
+        try (BufferedReader br = new BufferedReader(new FileReader(path))
+        ) {
+            String line = null;
+            int dataIndex = 0;
+            while ((line = br.readLine()) != null) {
+
+                if(dataIndex == 0){
+                    dataIndex += 1;
+                    String[] featureNames = line.split(" ");
+                    FeatureList featureList = new FeatureList();
+                    for (String featureName: featureNames){
+                        Feature feature = new Feature();
+                        feature.setName(featureName);
+                        featureList.add(feature);
+                    }
+                    dataSet.setFeatureList(featureList);
+                    continue;
+                }
+                String [] lineEle = line.split(" ");
+
+                for (int j=0;j<dataSet.getNumFeatures();j++){
+                    try {
+                        dataSet.setFeatureValue(dataIndex - 1, j, Double.valueOf(lineEle[j]));
+                    } catch (Exception e){ System.out.println(lineEle[j]);}
+                }
+                dataIndex += 1;
+            }
+        }
+        return dataSet;
+    }
+
     public static double[] loadlabels(String path, Config config) throws Exception{
         int numData = (int)Files.lines(Paths.get(path)).count();
         double [] labels = new double[numData];

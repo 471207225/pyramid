@@ -22,13 +22,19 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
     public int [] labels;
     public Vector gradient;
     public double[][] logEstimatedDistribution;
+    public double bias;
+    public double lam;
+    public int numDocs;
 
-    public WordVecClaLoss(DataSet doc2word, int [] labels, Vector wordScores, Vector gradient) {
+    public WordVecClaLoss(DataSet doc2word, int [] labels, Vector wordScores, Vector gradient, double bias, double lam) {
         this.doc2word = doc2word;
         this.wordScores = wordScores;
         this.wordScores = new DenseVector(wordScores);
         this.gradient = gradient;
         this.labels = labels;
+        this.bias = bias;
+        this.lam = lam;
+        this.numDocs = labels.length;
 
         getTargetDistribution();
 
@@ -74,7 +80,7 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
         for(int i=0; i<labels.length; i++){
             double [] scores = new double[2];
             scores[0] = 0;
-            scores[1] = wordScores.dot(doc2word.getRow(i));
+            scores[1] = wordScores.dot(doc2word.getRow(i))+bias;
             double logprobability_don = MathUtil.logSumExp(scores);
 
             this.logEstimatedDistribution[i][0]=-logprobability_don;
@@ -99,13 +105,16 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
 //                +(labels[i]-1)*Math.log(1-1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i))))))).average().getAsDouble();
         getlogEstimatedDistribution();
 
-        double los = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
-                .mapToDouble(i->(KLDivergence.klGivenPLogQ(targetDistribution[i],logEstimatedDistribution[i]))).average().getAsDouble();
+        double part1 = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
+                .mapToDouble(i->(KLDivergence.klGivenPLogQ(targetDistribution[i],logEstimatedDistribution[i]))).sum();
+
+        double part2 = IntStream.range(0, doc2word.getNumFeatures()).parallel().mapToDouble(i->Math.pow(wordScores.get(i), 2)).sum();
+        part2 = part2*lam;
 
 //        System.out.println("loss is ");
 //        System.out.println(los);
-        return los;
-
+//        return (part1+ part2)/numDocs;
+        return part1+part2;
     }
 
     @Override
