@@ -122,10 +122,10 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         /*
         probability
          */
-        System.out.println("document scores");
-        for(int prob_i=0; prob_i<10; prob_i++){
-            System.out.println(docScores[prob_i]);
-        }
+//        System.out.println("document scores");
+//        for(int prob_i=0; prob_i<10; prob_i++){
+//            System.out.println(docScores[prob_i]);
+//        }
 
         double[] gradient = new double[numWords];
 //        for (int i=0; i<gradient.length; i++){
@@ -146,8 +146,8 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     @Override
     protected void updateOthers() {
         WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, bias, lam);
-        System.out.println("loss before updateOthers");
-        System.out.println(loss.getValue());
+//        System.out.println("loss before updateOthers");
+//        System.out.println(loss.getValue());
 
         for (int i=0;i<numWords;i++){
             wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
@@ -160,8 +160,8 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 //        for(int j=0; j<10; j++){
 //            System.out.println(scoreMatrix.getScoresForData(j)[0]);
 //        }
-        System.out.println("loss after update others");
-        System.out.println(loss.getValue());
+//        System.out.println("loss after update others");
+//        System.out.println(loss.getValue());
 
 
         bias += shrinkageTuned*gradientForBias();

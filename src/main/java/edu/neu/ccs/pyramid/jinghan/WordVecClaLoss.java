@@ -10,6 +10,7 @@ import edu.neu.ccs.pyramid.util.Matrices;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
@@ -31,7 +32,7 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
 
     public WordVecClaLoss(DataSet doc2word, int [] labels, Vector wordScores, double bias, double lam) {
         this.doc2word = doc2word;
-        this.wordScores = wordScores;
+//        this.wordScores = wordScores;
         this.labels = labels;
         this.bias = bias;
         this.lam = lam;
@@ -40,6 +41,7 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
         this.docScores = new double[numDocs];
         this.numWords = doc2word.getNumFeatures();
         this.gradient = new DenseVector(numWords);
+        this.wordScores = new DenseVector(numWords);
 
 
     }
@@ -139,9 +141,41 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
 //        double los = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
 //                .mapToDouble(i->(-labels[i]*Math.log(1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i)))))
 //                +(labels[i]-1)*Math.log(1-1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i))))))).average().getAsDouble();
-
+        gradient();
         getTargetDistribution();
         getlogEstimatedDistribution();
+
+        System.out.println("wordScores");
+        for (int i=0; i<10; i++){
+            System.out.println(wordScores.get(i));
+        }
+
+        System.out.println("Probability");
+        for (int i=0; i<10; i++){
+            System.out.println(docProb[i]);
+            System.out.println(1/(1 + Math.exp(-docScores[i])));
+            System.out.println("\n");
+        }
+
+
+        System.out.println("\n");
+        System.out.println("check for logEstimateDistribution ");
+        for (int j=0; j<10;j++){
+            System.out.println(Arrays.toString(logEstimatedDistribution[j]));
+//            System.out.println(logEstimatedDistribution[j].toString());
+//            System.out.printf(" %f ",logEstimatedDistribution[j][0]);
+//            System.out.printf(" %f ",logEstimatedDistribution[j][1]);
+        }
+        System.out.println("\n");
+        for (int j=12500; j<10;j++){
+//            System.out.println(logEstimatedDistribution[j].toString());
+            System.out.println(Arrays.toString(logEstimatedDistribution[j]));
+        }
+//            System.out.printf(" %f ",logEstimatedDistribution[j][0]);
+//            System.out.printf(" %f ",logEstimatedDistribution[j][1]);
+//            System.out.printf("\t");
+//        }
+
 
         double part1 = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
                 .mapToDouble(i->(KLDivergence.klGivenPLogQ(targetDistribution[i],logEstimatedDistribution[i]))).sum();
