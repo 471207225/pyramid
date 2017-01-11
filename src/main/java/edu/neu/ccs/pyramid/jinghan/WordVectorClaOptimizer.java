@@ -39,6 +39,7 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         this.labels = labels;
         this.docScores = new double[numDocs];
         this.docProb = new double[numDocs];
+
         this.bias = bias;
         this.lam = lam;
 
@@ -48,10 +49,11 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     @Override
     protected double computeLearningRate(double[] searchDir) {
         System.out.println("initial learning rate = "+shrinkage);
-        double[] gradient = gradient(0);
         // switch back to real gradient
-        WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, bias, lam);
+        System.out.println("loss before line search");
 
+        WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, bias, lam);
+        System.out.println(loss.getValue());
 //        WordVecRegLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1));
         BackTrackingLineSearcher lineSearcher = new BackTrackingLineSearcher(loss);
         lineSearcher.setInitialStepLength(shrinkage);
@@ -62,11 +64,10 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         print loss
          */
 
-        double lossValue = loss.getValue();
-
         this.shrinkageTuned = learningRate;
         return learningRate;
     }
+
 
     public void updateDocScores(){
         IntStream.range(0, numDocs).parallel().forEach(this::updateDocScores);
@@ -106,8 +107,8 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
 
 
-        return sum/numDocs;
-//        return sum;
+//        return sum/numDocs;
+        return sum;
     }
 
     @Override
@@ -145,36 +146,39 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
     @Override
     protected void updateOthers() {
+        bias = shrinkageTuned*gradientForBias();
+
+
         WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, bias, lam);
-//        System.out.println("loss before updateOthers");
-//        System.out.println(loss.getValue());
+        System.out.println("loss before updateOthers");
+        System.out.println(loss.getValue());
 
         for (int i=0;i<numWords;i++){
             wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
         }
 
-        /*
-        check word score
-         */
-//        System.out.println("word score check 2");
-//        for(int j=0; j<10; j++){
-//            System.out.println(scoreMatrix.getScoresForData(j)[0]);
-//        }
-//        System.out.println("loss after update others");
-//        System.out.println(loss.getValue());
+//        /*
+//        check word score
+//         */
+////        System.out.println("word score check 2");
+////        for(int j=0; j<10; j++){
+////            System.out.println(scoreMatrix.getScoresForData(j)[0]);
+////        }
+        System.out.println("loss after update others");
+        System.out.println(loss.getValue());
 
-
-        bias += shrinkageTuned*gradientForBias();
 
 //        System.out.println(wordVectorRegression.wordScores);
 //        System.out.println(wordVectorRegression.wordScores);
     }
     public double gradientForBias(){
+        updateDocScores();
+        updateDocProb();
 
-        return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
-        docProb[i])*docProb[i]).average().getAsDouble();
 //        return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
-//        docProb[i])*docProb[i]).sum();
+//        docProb[i])*docProb[i]).average().getAsDouble();
+        return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
+        docProb[i])*docProb[i]).sum();
     }
 
 }

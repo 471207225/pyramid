@@ -195,8 +195,8 @@ public class Jinghan_dummyLog_bias_l2 {
 //                }
 //                int[] train_docLabels_int = dToint(train_docLabels);
 
-                System.out.println("tree is ");
-                System.out.println(regressor_shrunk);
+//                System.out.println("tree is ");
+//                System.out.println(regressor_shrunk);
 
 
                 Vector wordScores = optimizer.wordVectorRegression.wordScores;

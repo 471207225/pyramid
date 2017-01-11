@@ -133,7 +133,7 @@ public abstract class GBOptimizer implements Serializable{
             }
 
 
-            System.out.println("regressor = "+regressor);
+//            System.out.println("regressor = "+regressor);
             double[] searchDir = regressor.predict(dataSet);
 
 
@@ -143,8 +143,8 @@ public abstract class GBOptimizer implements Serializable{
             /*
             insert
              */
-            System.out.println("tree check here");
-            System.out.println(regressor);
+//            System.out.println("tree check here");
+//            System.out.println(regressor);
 //            System.out.println("gradient first check here, the first iteration gradient should be word score");
 //            double[] grad = regressor.predict(dataSet);
 //            for (int i_sd = 0; i_sd<grad.length; i_sd++){

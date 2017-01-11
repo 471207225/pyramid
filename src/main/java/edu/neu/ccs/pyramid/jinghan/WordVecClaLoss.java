@@ -142,36 +142,38 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
 //        double los = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
 //                .mapToDouble(i->(-labels[i]*Math.log(1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i)))))
 //                +(labels[i]-1)*Math.log(1-1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i))))))).average().getAsDouble();
+        updateDocScores();
+        updateDocProb();
         gradient();
         getTargetDistribution();
         getlogEstimatedDistribution();
 
-        System.out.println("wordScores");
-        for (int i=0; i<10; i++){
-            System.out.println(wordScores.get(i));
-        }
+//        System.out.println("wordScores");
+//        for (int i=0; i<10; i++){
+//            System.out.println(wordScores.get(i));
+//        }
+//
+//        System.out.println("Probability");
+//        for (int i=0; i<10; i++){
+//            System.out.println(docProb[i]);
+//            System.out.println(1/(1 + Math.exp(-docScores[i])));
+//            System.out.println("\n");
+//        }
 
-        System.out.println("Probability");
-        for (int i=0; i<10; i++){
-            System.out.println(docProb[i]);
-            System.out.println(1/(1 + Math.exp(-docScores[i])));
-            System.out.println("\n");
-        }
-
-
-        System.out.println("\n");
-        System.out.println("check for logEstimateDistribution ");
-        for (int j=0; j<10;j++){
-            System.out.println(Arrays.toString(logEstimatedDistribution[j]));
+//
+//        System.out.println("\n");
+//        System.out.println("check for logEstimateDistribution ");
+//        for (int j=0; j<10;j++){
+//            System.out.println(Arrays.toString(logEstimatedDistribution[j]));
 //            System.out.println(logEstimatedDistribution[j].toString());
 //            System.out.printf(" %f ",logEstimatedDistribution[j][0]);
 //            System.out.printf(" %f ",logEstimatedDistribution[j][1]);
-        }
-        System.out.println("\n");
-        for (int j=12500; j<10;j++){
+//        }
+//        System.out.println("\n");
+//        for (int j=12500; j<10;j++){
 //            System.out.println(logEstimatedDistribution[j].toString());
-            System.out.println(Arrays.toString(logEstimatedDistribution[j]));
-        }
+//            System.out.println(Arrays.toString(logEstimatedDistribution[j]));
+//        }
 //            System.out.printf(" %f ",logEstimatedDistribution[j][0]);
 //            System.out.printf(" %f ",logEstimatedDistribution[j][1]);
 //            System.out.printf("\t");
@@ -186,8 +188,8 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
 
 //        System.out.println("loss is ");
 //        System.out.println(los);
-        return (part1+ part2)/numDocs;
-//        return part1+part2;
+//        return (part1+ part2)/numDocs;
+        return part1+part2;
     }
 
     @Override

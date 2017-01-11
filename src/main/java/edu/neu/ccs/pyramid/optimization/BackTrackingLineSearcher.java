@@ -103,9 +103,6 @@ public class BackTrackingLineSearcher {
         double value = function.getValue();
         moveInfo.setOldValue(value);
         Vector gradient = function.getGradient();
-        System.out.println("null pointer check here");
-        System.out.println(gradient.size());
-        System.out.println(gradient);
 
 
 
@@ -120,24 +117,32 @@ public class BackTrackingLineSearcher {
             localSearchDir = gradient.times(-1);
         }
 
+        Vector wordScore_start = new DenseVector(function.getParameters());
+
         Vector initialPosition;
         // keep a copy of initial parameters
-        if (function.getParameters().isDense()) {
-            initialPosition = new DenseVector(function.getParameters());
-        } else {
-            initialPosition = new RandomAccessSparseVector(function.getParameters());
-        }
+        initialPosition = function.getParameters();
+//        if (function.getParameters().isDense()) {
+//            initialPosition = new DenseVector(function.getParameters());
+//        } else {
+//            initialPosition = new RandomAccessSparseVector(function.getParameters());
+//        }
+        System.out.println("loss before line search check2 here");
+        System.out.println(function.getValue());
         while (true) {
 
             Vector step = localSearchDir.times(stepLength);
             Vector target = initialPosition.plus(step);
             function.setParameters(target);
+            System.out.println("loss during line search");
+            System.out.println(function.getValue());
 
             double targetValue = function.getValue();
             if (logger.isDebugEnabled()) {
                 logger.debug("step length = " + stepLength + ", target value = " + targetValue);
 //                logger.debug("requirement = "+(value + c*stepLength*product));
             }
+
             // todo: if equal ok?
             if ((targetValue <= value + c * stepLength * product && value < Double.POSITIVE_INFINITY) || stepLength == 0) {
                 moveInfo.setStep(step);
@@ -152,7 +157,7 @@ public class BackTrackingLineSearcher {
         }
 
         //stay at initial position
-        function.setParameters(initialPosition);
+        function.setParameters(wordScore_start);
         return moveInfo.getStepLength();
     }
 
