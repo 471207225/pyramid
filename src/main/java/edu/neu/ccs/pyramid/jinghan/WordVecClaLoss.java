@@ -41,7 +41,8 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
         this.docScores = new double[numDocs];
         this.numWords = doc2word.getNumFeatures();
         this.gradient = new DenseVector(numWords);
-        this.wordScores = new DenseVector(numWords);
+//        this.wordScores = new DenseVector(numWords);
+        this.wordScores=wordScores;
 
 
     }
