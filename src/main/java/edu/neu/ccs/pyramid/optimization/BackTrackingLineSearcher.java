@@ -87,7 +87,74 @@ public class BackTrackingLineSearcher {
         return moveInfo;
     }
 
+    public double computeLearningRate(Vector searchDirection) {
+        Vector localSearchDir;
+        if (logger.isDebugEnabled()) {
+            logger.debug("start line search");
+            // don't want to show too much; only show it on small problems
+            if (searchDirection.size() < 100) {
+                logger.debug("direction=" + searchDirection);
+            }
 
+        }
+        MoveInfo moveInfo = new MoveInfo();
+
+        double stepLength = initialStepLength;
+        double value = function.getValue();
+        moveInfo.setOldValue(value);
+        Vector gradient = function.getGradient();
+        System.out.println("null pointer check here");
+        System.out.println(gradient.size());
+        System.out.println(gradient);
+
+
+
+        double product = gradient.dot(searchDirection);
+        if (product < 0) {
+            localSearchDir = searchDirection;
+        } else {
+            if (logger.isWarnEnabled()) {
+                logger.warn("Bad search direction! Use negative gradient instead. Product of gradient and search direction = " + product);
+            }
+
+            localSearchDir = gradient.times(-1);
+        }
+
+        Vector initialPosition;
+        // keep a copy of initial parameters
+        if (function.getParameters().isDense()) {
+            initialPosition = new DenseVector(function.getParameters());
+        } else {
+            initialPosition = new RandomAccessSparseVector(function.getParameters());
+        }
+        while (true) {
+
+            Vector step = localSearchDir.times(stepLength);
+            Vector target = initialPosition.plus(step);
+            function.setParameters(target);
+
+            double targetValue = function.getValue();
+            if (logger.isDebugEnabled()) {
+                logger.debug("step length = " + stepLength + ", target value = " + targetValue);
+//                logger.debug("requirement = "+(value + c*stepLength*product));
+            }
+            // todo: if equal ok?
+            if ((targetValue <= value + c * stepLength * product && value < Double.POSITIVE_INFINITY) || stepLength == 0) {
+                moveInfo.setStep(step);
+                moveInfo.setStepLength(stepLength);
+                moveInfo.setNewValue(targetValue);
+                break;
+            }
+            stepLength *= shrinkage;
+        }
+        if (logger.isDebugEnabled()) {
+            logger.debug("line search done. " + moveInfo);
+        }
+
+        //stay at initial position
+        function.setParameters(initialPosition);
+        return moveInfo.getStepLength();
+    }
 
     public void setInitialStepLength(double initialStepLength) {
         this.initialStepLength = initialStepLength;

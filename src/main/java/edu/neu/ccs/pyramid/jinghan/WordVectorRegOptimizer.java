@@ -59,6 +59,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
     protected double[] gradient(int ensembleIndex) {
         updateDocScores();
         double[] gradient = new double[numWords];
+
 //        double[] gradient_newton = new double[numWords];
         IntStream.range(0, gradient.length).parallel()
                 .forEach(i->gradient[i]=gradientForWord(i));
@@ -84,6 +85,8 @@ public class WordVectorRegOptimizer extends GBOptimizer {
 //        IntStream.range(0,numWords).parallel().forEach(i->gradient_addbias[i]=gradient[i]);
 //        gradient_addbias[numWords] = bias;
         WordVecRegLoss loss = new WordVecRegLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1), bias, lam) ;
+        System.out.println("loss before line search");
+        System.out.println(loss.getValue());
 
 //        System.out.println("excellent gradient is" + gradient[3206]);
         // switch back to real gradient
@@ -95,6 +98,8 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         double learningRate = moveInfo.getStepLength();
         System.out.println("tuned learning rate = "+learningRate);
         this.shrinkageTuned = learningRate;
+        System.out.println("loss after line search");
+        System.out.println(loss.getValue());
         return learningRate;
     }
 

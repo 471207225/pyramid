@@ -50,21 +50,19 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         System.out.println("initial learning rate = "+shrinkage);
         double[] gradient = gradient(0);
         // switch back to real gradient
-        WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1), bias, lam);
+        WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, bias, lam);
+
 //        WordVecRegLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1));
         BackTrackingLineSearcher lineSearcher = new BackTrackingLineSearcher(loss);
         lineSearcher.setInitialStepLength(shrinkage);
-        BackTrackingLineSearcher.MoveInfo moveInfo = lineSearcher.moveAlongDirection(new DenseVector(searchDir));
-        double learningRate = moveInfo.getStepLength();
+        double learningRate = lineSearcher.computeLearningRate(new DenseVector(searchDir));
         System.out.println("tuned learning rate = "+learningRate);
 
         /*
         print loss
          */
-        double lossValue = loss.getValue();
-        System.out.println("loss is ");
-        System.out.println(lossValue);
 
+        double lossValue = loss.getValue();
 
         this.shrinkageTuned = learningRate;
         return learningRate;
@@ -108,8 +106,8 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
 
 
-//        return sum/numDocs;
-        return sum;
+        return sum/numDocs;
+//        return sum;
     }
 
     @Override
@@ -121,7 +119,6 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     protected double[] gradient(int ensembleIndex) {
         updateDocScores();
         updateDocProb();
-
         /*
         probability
          */
@@ -148,38 +145,36 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
     @Override
     protected void updateOthers() {
-//        System.out.println("word scores\n");
+        WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, bias, lam);
+        System.out.println("loss before updateOthers");
+        System.out.println(loss.getValue());
+
         for (int i=0;i<numWords;i++){
-//            System.out.println(scoreMatrix.getScoresForData(i)[0]);
-//            System.out.println(" ");
             wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
         }
 
         /*
         check word score
          */
-        System.out.println("word score check 2");
-        for(int j=0; j<10; j++){
-            System.out.println(scoreMatrix.getScoresForData(j)[0]);
-        }
-
-
-
-
+//        System.out.println("word score check 2");
+//        for(int j=0; j<10; j++){
+//            System.out.println(scoreMatrix.getScoresForData(j)[0]);
+//        }
+        System.out.println("loss after update others");
+        System.out.println(loss.getValue());
 
 
         bias += shrinkageTuned*gradientForBias();
-        System.out.println("bias is ");
-        System.out.println(bias);
+
 //        System.out.println(wordVectorRegression.wordScores);
 //        System.out.println(wordVectorRegression.wordScores);
     }
     public double gradientForBias(){
 
-//        return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
-//        docProb[i])).average().getAsDouble();
         return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
-        docProb[i])).sum();
+        docProb[i])*docProb[i]).average().getAsDouble();
+//        return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
+//        docProb[i])*docProb[i]).sum();
     }
 
 }
