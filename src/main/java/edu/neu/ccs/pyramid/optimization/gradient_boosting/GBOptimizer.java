@@ -71,13 +71,6 @@ public abstract class GBOptimizer implements Serializable{
     protected Regressor fitRegressor(int ensembleIndex){
         double[] gradients = gradient(ensembleIndex);
         this.gradients = gradients;
-
-
-//        System.out.println("fitting ");
-//        System.out.println("data set = "+dataSet);
-//        System.out.println("gradients = "+Arrays.toString(gradients));
-//        System.out.println("weights = "+Arrays.toString(weights));
-//        System.out.println(factory);
         Regressor regressor = factory.fit(dataSet,gradients, weights);
         return regressor;
     }
@@ -85,6 +78,7 @@ public abstract class GBOptimizer implements Serializable{
     //todo make it more general
     protected void shrink(Regressor regressor, double[] searchDir){
         double learningRate = computeLearningRate(searchDir);
+        System.out.println("tree learning rate"+learningRate);
         if (regressor instanceof RegressionTree){
             ((RegressionTree)regressor).shrink(learningRate);
         }
@@ -135,27 +129,7 @@ public abstract class GBOptimizer implements Serializable{
 
 //            System.out.println("regressor = "+regressor);
             double[] searchDir = regressor.predict(dataSet);
-
-
-
             shrink(regressor, searchDir);
-
-            /*
-            insert
-             */
-//            System.out.println("tree check here");
-//            System.out.println(regressor);
-//            System.out.println("gradient first check here, the first iteration gradient should be word score");
-//            double[] grad = regressor.predict(dataSet);
-//            for (int i_sd = 0; i_sd<grad.length; i_sd++){
-//                if (gradients[i_sd]!=0.0016833932672689644){
-//                    System.out.println(grad[i_sd]);
-//                }
-//            }
-
-
-
-
             boosting.getEnsemble(k).add(regressor);
             updateStagedScores(regressor,k);
         }

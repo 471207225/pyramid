@@ -55,4 +55,6 @@ public class WordVecRegLoss implements Optimizable.ByGradientValue{
     public Vector getGradient() {
         return gradient;
     }
+
+
 }

@@ -88,9 +88,24 @@ public class Jinghan_dummyLog_bias_l2 {
         int saveModelInterval = config.getInt("saveModelInterval");
 
         for (int i = 1; i <= numIterations; i++) {
+            System.out.println("begin iterate");
             int iteration_num = i + interationStart;
             System.out.println("iteration" + iteration_num);
+//            System.out.println("check word scores before iterate");
+//            for (int j=1; j<wordVectorRegression.wordScores.size(); j++){
+//                if (j%1000==0){
+//                    System.out.println(wordVectorRegression.wordScores.get(j));
+//                }
+//            }
             optimizer.iterate();
+//            System.out.println("check word scores after iterate");
+//            for (int j=1; j<wordVectorRegression.wordScores.size(); j++){
+//                if (j%1000==0){
+//                    System.out.println(wordVectorRegression.wordScores.get(j));
+//                }
+//            }
+
+
             int size = wordVectorRegression.getEnsemble(0).getRegressors().size();
 //            // print tree
 //            System.out.println(wordVectorRegression.getEnsemble(0).get(size-1));

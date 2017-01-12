@@ -27,6 +27,9 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     public double bias;
     public double shrinkageTuned;
     public double lam;
+    public boolean isDocScoresCacheValid;
+    public boolean isProbCacheValid;
+    public Vector wordScores;
 
 
     public WordVectorClaOptimizer(WordVectorRegression wordVectorRegression, RegressorFactory factory,
@@ -39,10 +42,11 @@ public class WordVectorClaOptimizer extends GBOptimizer {
         this.labels = labels;
         this.docScores = new double[numDocs];
         this.docProb = new double[numDocs];
-
+        this.wordScores = wordVectorRegression.wordScores;
         this.bias = bias;
         this.lam = lam;
-
+        this.isDocScoresCacheValid=false;
+        this.isProbCacheValid=false;
     }
 
 
@@ -50,19 +54,15 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     protected double computeLearningRate(double[] searchDir) {
         System.out.println("initial learning rate = "+shrinkage);
         // switch back to real gradient
-        System.out.println("loss before line search");
+//        System.out.println("loss before line search");
 
-        WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, bias, lam);
-        System.out.println(loss.getValue());
-//        WordVecRegLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, new DenseVector(gradient).times(-1));
+        WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordScores, bias, lam);
+//        System.out.println(loss.getValue());
+//        System.out.println("bias = "+bias);
         BackTrackingLineSearcher lineSearcher = new BackTrackingLineSearcher(loss);
         lineSearcher.setInitialStepLength(shrinkage);
         double learningRate = lineSearcher.computeLearningRate(new DenseVector(searchDir));
         System.out.println("tuned learning rate = "+learningRate);
-
-        /*
-        print loss
-         */
 
         this.shrinkageTuned = learningRate;
         return learningRate;
@@ -74,7 +74,7 @@ public class WordVectorClaOptimizer extends GBOptimizer {
     }
 
     public void updateDocScores(int docIndex){
-        this.docScores[docIndex] = wordVectorRegression.predict(doc2word.getRow(docIndex))+bias;
+        this.docScores[docIndex] = wordScores.dot(doc2word.getRow(docIndex))+bias;
     }
 
     public void updateDocProb(){IntStream.range(0, numDocs).parallel().forEach(this::updateDocProb);
@@ -88,24 +88,16 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
     public double gradientForWord(int wordIndex){
         double sum = 0;
-//        for (int i=0; i<numDocs; i++){
-
-////            sum += (labels[i] - 1/donomi)*doc2word.getRow(i).get(wordIndex)/numDocs;
-//            sum += (labels[i] - 1/donomi)*doc2word.getRow(i).get(wordIndex);
         Vector column = doc2word.getColumn(wordIndex);
         for (Vector.Element element: column.nonZeroes()){
 
             int docId = element.index();
             double proportion = element.get();
-            // average
-//            sum += (labels[docId] - 1/donomi)*proportion/numDocs;
-            // without average
+
             sum += (labels[docId] - docProb[docId])*proportion;
 
         }
         sum += -2*lam*wordVectorRegression.wordScores.get(wordIndex);
-
-
 
 //        return sum/numDocs;
         return sum;
@@ -116,24 +108,18 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
     }
 
+
     @Override
     protected double[] gradient(int ensembleIndex) {
+        double[] gradient = new double[numWords];
+        if (isDocScoresCacheValid&&isProbCacheValid){
+            IntStream.range(0, gradient.length).parallel()
+                    .forEach(i->gradient[i]=gradientForWord(i));
+        }
         updateDocScores();
         updateDocProb();
-        /*
-        probability
-         */
-//        System.out.println("document scores");
-//        for(int prob_i=0; prob_i<10; prob_i++){
-//            System.out.println(docScores[prob_i]);
-//        }
-
-        double[] gradient = new double[numWords];
-//        for (int i=0; i<gradient.length; i++){
-//            gradient[i] = gradientForWord(i);
-//        }
-//        System.out.println("gradient is ");
-//        System.out.println(Arrays.toString(gradient));
+        this.isDocScoresCacheValid=true;
+        this.isProbCacheValid=true;
         IntStream.range(0, gradient.length).parallel()
                 .forEach(i->gradient[i]=gradientForWord(i));
         return gradient;
@@ -141,42 +127,57 @@ public class WordVectorClaOptimizer extends GBOptimizer {
 
     @Override
     protected void initializeOthers() {
-
     }
 
     @Override
     protected void updateOthers() {
-        bias = shrinkageTuned*gradientForBias();
-
 
         WordVecClaLoss loss = new WordVecClaLoss(doc2word, labels, wordVectorRegression.wordScores, bias, lam);
-        System.out.println("loss before updateOthers");
-        System.out.println(loss.getValue());
+        System.out.println("before updateOthers");
+        System.out.println("bias = " + bias);
+        System.out.println("loss "+ loss.getValue());
+        System.out.println("lam = " + lam);
+        System.out.println("wordScores before updateOthers is ");
+        for(int j=0; j<5; j++){
+            System.out.println(wordScores.get(j));
+        }
 
         for (int i=0;i<numWords;i++){
             wordVectorRegression.wordScores.set(i,scoreMatrix.getScoresForData(i)[0]);
         }
 
-//        /*
-//        check word score
-//         */
-////        System.out.println("word score check 2");
-////        for(int j=0; j<10; j++){
-////            System.out.println(scoreMatrix.getScoresForData(j)[0]);
-////        }
+        gradient(0);
+        bias += shrinkageTuned*gradientForBias();
+
+        System.out.println("after update others");
+        System.out.println("bias = "+bias);
+        System.out.println("loss = "+ loss.getValue());
+
+        /*
+        check word score
+                */
+        System.out.println("word score");
+        for(int j=0; j<10; j++){
+            System.out.println(wordScores.get(j));
+        }
         System.out.println("loss after update others");
         System.out.println(loss.getValue());
+        System.out.println("lam = "+lam);
 
 
 //        System.out.println(wordVectorRegression.wordScores);
 //        System.out.println(wordVectorRegression.wordScores);
     }
     public double gradientForBias(){
+        if (isProbCacheValid&&isDocScoresCacheValid){
+            return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
+                    docProb[i])*docProb[i]).sum();
+        }
+
         updateDocScores();
         updateDocProb();
-
-//        return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
-//        docProb[i])*docProb[i]).average().getAsDouble();
+        this.isDocScoresCacheValid=true;
+        this.isProbCacheValid=true;
         return IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
         docProb[i])*docProb[i]).sum();
     }

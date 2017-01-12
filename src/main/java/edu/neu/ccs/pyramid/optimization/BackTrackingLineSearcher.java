@@ -1,10 +1,13 @@
 package edu.neu.ccs.pyramid.optimization;
 
+import edu.neu.ccs.pyramid.jinghan.WordVecClaLoss;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
+
+import java.util.stream.IntStream;
 
 /**
  * minimize the function along the line
@@ -35,7 +38,6 @@ public class BackTrackingLineSearcher {
             if (searchDirection.size()<100){
                 logger.debug("direction="+searchDirection);
             }
-
         }
         MoveInfo moveInfo = new MoveInfo();
 
@@ -89,26 +91,38 @@ public class BackTrackingLineSearcher {
 
     public double computeLearningRate(Vector searchDirection) {
         Vector localSearchDir;
+        int numWords = searchDirection.size();
+        Vector searchDirectionWithBias = new DenseVector(numWords+1);
+        IntStream.range(0, numWords).parallel().forEach(i->searchDirectionWithBias.set(i+1, searchDirection.get(i)));
         if (logger.isDebugEnabled()) {
             logger.debug("start line search");
             // don't want to show too much; only show it on small problems
-            if (searchDirection.size() < 100) {
-                logger.debug("direction=" + searchDirection);
+            if (searchDirectionWithBias.size() < 100) {
+                logger.debug("direction=" + searchDirectionWithBias);
             }
-
         }
         MoveInfo moveInfo = new MoveInfo();
 
         double stepLength = initialStepLength;
+
+        System.out.println("starting point of one iteration");
+
         double value = function.getValue();
+        System.out.println("loss = " + value);
         moveInfo.setOldValue(value);
+
         Vector gradient = function.getGradient();
+        searchDirectionWithBias.set(0,-gradient.get(0));
+
+        System.out.println("check whole gradient here");
+        for (int i=0; i<5; i++){
+            System.out.println(gradient.get(i));
+        }
 
 
-
-        double product = gradient.dot(searchDirection);
+        double product = gradient.dot(searchDirectionWithBias);
         if (product < 0) {
-            localSearchDir = searchDirection;
+            localSearchDir = searchDirectionWithBias;
         } else {
             if (logger.isWarnEnabled()) {
                 logger.warn("Bad search direction! Use negative gradient instead. Product of gradient and search direction = " + product);
@@ -117,25 +131,58 @@ public class BackTrackingLineSearcher {
             localSearchDir = gradient.times(-1);
         }
 
-        Vector wordScore_start = new DenseVector(function.getParameters());
 
         Vector initialPosition;
         // keep a copy of initial parameters
-        initialPosition = function.getParameters();
-//        if (function.getParameters().isDense()) {
-//            initialPosition = new DenseVector(function.getParameters());
-//        } else {
-//            initialPosition = new RandomAccessSparseVector(function.getParameters());
-//        }
-        System.out.println("loss before line search check2 here");
-        System.out.println(function.getValue());
-        while (true) {
+        initialPosition = new DenseVector(function.getParameters());
+        System.out.println("First, check initial position");
+        for (int i=0; i<5; i++){
 
+            System.out.println(initialPosition.get(i));
+
+        }
+
+
+        int ct = 0;
+
+        while (true) {
+            ct = ct+1;
             Vector step = localSearchDir.times(stepLength);
+            System.out.println("step length " + stepLength);
+
+            System.out.println("localSearchDir");
+            for (int i=0; i<5; i++){
+                System.out.println(localSearchDir.get(i));
+            }
+
             Vector target = initialPosition.plus(step);
+            System.out.println("length of initial postion " + initialPosition.size());
+
+            System.out.println("step");
+            for (int i=0; i<5; i++){
+                System.out.println(step.get(i));
+            }
+
+            System.out.println("initial position");
+            for (int i=0; i<5; i++){
+                System.out.println(initialPosition.get(i));
+            }
+
+            System.out.println("target");
+            for (int i=0; i<5; i++){
+                System.out.println(target.get(i));
+            }
+
+
+
+
+
+
+
+
+
+
             function.setParameters(target);
-            System.out.println("loss during line search");
-            System.out.println(function.getValue());
 
             double targetValue = function.getValue();
             if (logger.isDebugEnabled()) {
@@ -157,7 +204,8 @@ public class BackTrackingLineSearcher {
         }
 
         //stay at initial position
-        function.setParameters(wordScore_start);
+        function.setParameters(initialPosition);
+//
         return moveInfo.getStepLength();
     }
 

@@ -33,7 +33,6 @@ public class WordVectorRegOptimizer extends GBOptimizer {
 
     public WordVectorRegOptimizer(WordVectorRegression wordVectorRegression, RegressorFactory factory,
                                   DataSet doc2word, DataSet word2vec, double[] labels, double[] weights, double bias, double lam) {
-        //super(wordVectorRegression, word2vec, factory);
         super(wordVectorRegression, word2vec, factory, weights);
         this.doc2word = doc2word;
         this.wordVectorRegression = wordVectorRegression;
@@ -43,12 +42,7 @@ public class WordVectorRegOptimizer extends GBOptimizer {
         this.docScores = new double[numDocs];
         this.bias = bias;
         this.lam = lam;
-//        this.wordSumSquare = new double[numWords];
-//        for (int w=0;w<numWords;w++){
-//            for (int i=0;i<numDocs;i++){
-//                wordSumSquare[w] += Math.pow(doc2word.getRow(i).get(w),2);
-//            }
-//        }
+
     }
 
     @Override

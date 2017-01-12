@@ -22,6 +22,7 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
     public DataSet doc2word;
     public int [] labels;
     public Vector gradient;
+    public Vector parameters;
     public double[][] logEstimatedDistribution;
     public double bias;
     public double lam;
@@ -29,10 +30,16 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
     public double[] docProb;
     public double[] docScores;
     public int numWords;
+    public boolean isValueCacheValid;
+    public double value;
+    public boolean isDocScoresCacheValid;
+    public boolean isProbCacheValid;
+    public boolean isGradientCacheValid;
+    public boolean isBiasCacheValid;
+
 
     public WordVecClaLoss(DataSet doc2word, int [] labels, Vector wordScores, double bias, double lam) {
         this.doc2word = doc2word;
-//        this.wordScores = wordScores;
         this.labels = labels;
         this.bias = bias;
         this.lam = lam;
@@ -40,15 +47,94 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
         this.docProb = new double[numDocs];
         this.docScores = new double[numDocs];
         this.numWords = doc2word.getNumFeatures();
-        this.gradient = new DenseVector(numWords);
-//        this.wordScores = new DenseVector(numWords);
+        this.gradient = new DenseVector(numWords+1);
+        this.parameters = new DenseVector(numWords+1);
         this.wordScores=wordScores;
-
+        this.isValueCacheValid=false;
+        this.isGradientCacheValid=false;
+        this.isDocScoresCacheValid=false;
+        this.isProbCacheValid=false;
 
     }
-    /*
-    get TargetDistribution and EstimateDistribution.
-     */
+
+    @Override
+    public Vector getParameters() {
+        combineParameters();
+        return parameters;
+    }
+
+    @Override
+    public void setParameters(Vector parameters) {
+        this.parameters=parameters;
+        this.bias = parameters.get(0);
+        IntStream.range(0,numWords).parallel().forEach(i->wordScores.set(i, parameters.get(i+1)));
+        this.isValueCacheValid=false;
+        this.isGradientCacheValid=false;
+        this.isDocScoresCacheValid=false;
+        this.isProbCacheValid=false;
+    }
+
+    @Override
+    public Vector getGradient() {
+        if (isGradientCacheValid){
+            return gradient;
+        }
+        if (isDocScoresCacheValid&&isProbCacheValid){
+            updateGradient();
+            this.isDocScoresCacheValid=true;
+            this.isProbCacheValid=true;
+            return gradient;
+        }
+        updateDocScores();
+        updateDocProb();
+        updateGradient();
+        this.isDocScoresCacheValid=true;
+        this.isProbCacheValid=true;
+        this.isGradientCacheValid=true;
+        return gradient;
+    }
+
+
+    @Override
+    public double getValue() {
+        if (isValueCacheValid){
+            return this.value;
+        }
+        if (isDocScoresCacheValid&&isProbCacheValid){
+         this.value = calculateValue();
+        }
+        updateDocScores();
+        updateDocProb();
+        System.out.println("wordScores");
+        for (int i=0; i<5; i++){
+            System.out.println(wordScores.get(i));
+        }
+        System.out.println("bias = "+bias);
+
+        System.out.println("docScores");
+        for (int i=0; i<5; i++){
+            System.out.println(docScores[i]);
+        }
+        System.out.println("probability");
+        for (int i=0; i<5; i++){
+            System.out.println(docProb[i]);
+        }
+        this.value = calculateValue();
+        this.isDocScoresCacheValid=true;
+        this.isProbCacheValid=true;
+        return this.value;
+    }
+
+    public double calculateValue(){
+        getTargetDistribution();
+        getlogEstimatedDistribution();
+        double part1 = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
+                .mapToDouble(i->(KLDivergence.klGivenPLogQ(targetDistribution[i],logEstimatedDistribution[i]))).sum();
+
+        double part2 = IntStream.range(0, doc2word.getNumFeatures()).parallel().mapToDouble(i->Math.pow(wordScores.get(i), 2)).sum();
+        part2 = part2*lam;
+        return part1+part2;
+    }
 
     public void getTargetDistribution(){
         this.targetDistribution = new double[labels.length][2];
@@ -70,18 +156,13 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
         for(int i=0; i<labels.length; i++){
             double [] scores = new double[2];
             scores[0] = 0;
-            scores[1] = wordScores.dot(doc2word.getRow(i))+bias;
+            scores[1] = docScores[i];
             double logprobability_don = MathUtil.logSumExp(scores);
 
             this.logEstimatedDistribution[i][0]=-logprobability_don;
             this.logEstimatedDistribution[i][1]=scores[1]-logprobability_don;
         }
     }
-
-
-    /*
-    Update doc scores and probability and gradient
-     */
 
     // document scores
     public void updateDocScores(){
@@ -118,88 +199,24 @@ public class WordVecClaLoss implements Optimizable.ByGradientValue{
         sum += -2*lam*wordScores.get(wordIndex);
 
 //        return sum/numDocs;
-        return sum;
+        return -sum;
+    }
+
+    public double gradientForBias(){
+
+        return -IntStream.range(0, doc2word.getNumDataPoints()).parallel().mapToDouble(i->(labels[i]-
+                docProb[i])*docProb[i]).sum();
+    }
+
+    public void updateGradient(){
+        IntStream.range(0, numWords).parallel().forEach(i->gradient.set(i+1, gradientForWord(i)));
+        gradient.set(0, gradientForBias());
+    }
+
+    public void combineParameters(){
+        parameters.set(0, bias);
+        IntStream.range(0, numWords).parallel().forEach(i->parameters.set(i+1, wordScores.get(i)));
     }
 
 
-    public void gradient(){
-        updateDocScores();
-        updateDocProb();
-        IntStream.range(0, numWords).parallel().forEach(i->gradient.set(i, gradientForWord(i)));
-    }
-
-    @Override
-    public Vector getGradient() {
-        return gradient;
-    }
-
-
-    @Override
-    public double getValue() {
-//        return IntStream.range(0, doc2word.getNumDataPoints()).parallel()
-//                .mapToDouble(i->(-labels[i]*Math.log(1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i)))))
-//                +(labels[i]-1)*Math.log(1-1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i))))))).sum();
-//        double los = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
-//                .mapToDouble(i->(-labels[i]*Math.log(1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i)))))
-//                +(labels[i]-1)*Math.log(1-1/(1+Math.exp(-wordScores.dot(doc2word.getRow(i))))))).average().getAsDouble();
-        updateDocScores();
-        updateDocProb();
-        gradient();
-        getTargetDistribution();
-        getlogEstimatedDistribution();
-
-//        System.out.println("wordScores");
-//        for (int i=0; i<10; i++){
-//            System.out.println(wordScores.get(i));
-//        }
-//
-//        System.out.println("Probability");
-//        for (int i=0; i<10; i++){
-//            System.out.println(docProb[i]);
-//            System.out.println(1/(1 + Math.exp(-docScores[i])));
-//            System.out.println("\n");
-//        }
-
-//
-//        System.out.println("\n");
-//        System.out.println("check for logEstimateDistribution ");
-//        for (int j=0; j<10;j++){
-//            System.out.println(Arrays.toString(logEstimatedDistribution[j]));
-//            System.out.println(logEstimatedDistribution[j].toString());
-//            System.out.printf(" %f ",logEstimatedDistribution[j][0]);
-//            System.out.printf(" %f ",logEstimatedDistribution[j][1]);
-//        }
-//        System.out.println("\n");
-//        for (int j=12500; j<10;j++){
-//            System.out.println(logEstimatedDistribution[j].toString());
-//            System.out.println(Arrays.toString(logEstimatedDistribution[j]));
-//        }
-//            System.out.printf(" %f ",logEstimatedDistribution[j][0]);
-//            System.out.printf(" %f ",logEstimatedDistribution[j][1]);
-//            System.out.printf("\t");
-//        }
-
-
-        double part1 = IntStream.range(0, doc2word.getNumDataPoints()).parallel()
-                .mapToDouble(i->(KLDivergence.klGivenPLogQ(targetDistribution[i],logEstimatedDistribution[i]))).sum();
-
-        double part2 = IntStream.range(0, doc2word.getNumFeatures()).parallel().mapToDouble(i->Math.pow(wordScores.get(i), 2)).sum();
-        part2 = part2*lam;
-
-//        System.out.println("loss is ");
-//        System.out.println(los);
-//        return (part1+ part2)/numDocs;
-        return part1+part2;
-    }
-
-    @Override
-    public Vector getParameters() {
-        return wordScores;
-    }
-
-    @Override
-    public void setParameters(Vector parameters) {
-        this.wordScores = parameters;
-
-    }
 }
