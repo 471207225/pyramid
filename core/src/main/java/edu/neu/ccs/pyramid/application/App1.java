@@ -21,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.*;
 import java.util.regex.Pattern;
@@ -686,6 +687,43 @@ public class App1 {
         objectMapper.writeValue(new File(dataFile,"data_config.json"),config);
 
 
+        File rawTextFile = Paths.get(dataFile.toString(),"raw_text.txt").toFile();
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(rawTextFile));
+        for (String docId: indexIds){
+            String source = getSouce(config,index,docId);
+            bufferedWriter.write(source);
+            bufferedWriter.newLine();
+        }
+
+        bufferedWriter.close();
+
+        File labelFile = Paths.get(dataFile.toString(),"label.txt").toFile();
+        BufferedWriter bufferedWriter2 = new BufferedWriter(new FileWriter(labelFile));
+        for (int i=0;i<dataSet.getNumDataPoints();i++){
+            MultiLabel multiLabel = dataSet.getMultiLabels()[i];
+            for (int l: multiLabel.getMatchedLabels()){
+                bufferedWriter2.append(dataSet.getLabelTranslator().toExtLabel(l)).append(" ");
+            }
+            bufferedWriter2.newLine();
+        }
+        bufferedWriter2.close();
+
+    }
+    
+
+
+    private static String getSouce(Config config, ESIndex esIndex, String docId){
+        Comparator<Map.Entry<Integer,String>> comparator = Comparator.comparing(Map.Entry::getKey);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String field: config.getStrings("train.feature.ngram.extractionFields")){
+            Map<Integer,String> termVector  = esIndex.getTermVectorFromIndex(field, docId);
+            List<String> source = termVector.entrySet().stream()
+                    .sorted(comparator).map(Map.Entry::getValue).collect(Collectors.toList());
+            for (String term: source){
+                stringBuilder.append(source).append(term).append(" ");
+            }
+        }
+        return stringBuilder.toString();
     }
 
     static void createTrainSet(Config config, ESIndex index, Logger logger) throws Exception{
