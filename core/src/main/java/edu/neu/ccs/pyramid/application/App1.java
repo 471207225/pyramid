@@ -709,7 +709,7 @@ public class App1 {
         bufferedWriter2.close();
 
     }
-    
+
 
 
     private static String getSouce(Config config, ESIndex esIndex, String docId){
@@ -720,7 +720,7 @@ public class App1 {
             List<String> source = termVector.entrySet().stream()
                     .sorted(comparator).map(Map.Entry::getValue).collect(Collectors.toList());
             for (String term: source){
-                stringBuilder.append(source).append(term).append(" ");
+                stringBuilder.append(term).append(" ");
             }
         }
         return stringBuilder.toString();
