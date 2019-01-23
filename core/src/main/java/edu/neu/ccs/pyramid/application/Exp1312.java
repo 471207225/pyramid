@@ -161,7 +161,7 @@ public class Exp1312 {
         System.out.println("alignment error="+CalibrationEval.squareError(generateStream(predictions,calibrator),10));
         System.out.println("sharpness="+sharpness);
         System.out.println("uncertainty="+CalibrationEval.variance(generateStream(predictions,calibrator)));
-        System.out.println(Displayer.displayCalibrationResult(generateStream(predictions,calibrator)));
+//        System.out.println(Displayer.displayCalibrationResult(generateStream(predictions,calibrator)));
         CaliRes caliRes = new CaliRes();
         caliRes.mse = mse;
         caliRes.ace= ace;
@@ -230,10 +230,10 @@ public class Exp1312 {
 
         Paths.get(config.getString("output")).toFile().mkdirs();
         File accResult = Paths.get(config.getString("output"),dataName+"_accuracy.txt").toFile();
-        FileUtils.writeStringToFile(accResult,""+mlMeasures.getInstanceAverage().getAccuracy());
+//        FileUtils.writeStringToFile(accResult,""+mlMeasures.getInstanceAverage().getAccuracy());
 
         File f1Result = Paths.get(config.getString("output"),dataName+"_f1.txt").toFile();
-        FileUtils.writeStringToFile(f1Result,""+mlMeasures.getInstanceAverage().getF1());
+//        FileUtils.writeStringToFile(f1Result,""+mlMeasures.getInstanceAverage().getF1());
 //        PluginF1 pluginF1 = new PluginF1(cbm, support);
 //        System.out.println("performance with uncalibrated probability, support GFM");
 //        System.out.println(new MLMeasures(pluginF1, dataset));

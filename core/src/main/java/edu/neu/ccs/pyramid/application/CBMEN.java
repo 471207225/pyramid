@@ -398,7 +398,7 @@ public class CBMEN {
 //            System.out.println(ListUtil.toSimpleString(unobservedLabels));
         }
         String output = config.getString("output.dir");
-        FileUtils.writeStringToFile(new File(output,"unobserved_labels.txt"), ListUtil.toSimpleString(unobservedLabels));
+//        FileUtils.writeStringToFile(new File(output,"unobserved_labels.txt"), ListUtil.toSimpleString(unobservedLabels));
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
