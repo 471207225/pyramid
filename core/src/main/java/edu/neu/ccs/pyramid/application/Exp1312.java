@@ -131,22 +131,22 @@ public class Exp1312 {
                 setCalibrator = new VectorIdentityCalibrator(1);
                 break;
             default:
-                throw new IllegalArgumentException("illegal setCalibrator");
+                throw new IllegalArgumentException("illegal setCalibrator, given="+config.getString("setCalibrator"));
         }
 
-        System.out.println(setCalibrator);
+//        System.out.println(setCalibrator);
 
 
 
 //        System.out.println("performance on calibration set");
 //
 //        showPerformance(config, cal, cbm, labelCalibrator, setCalibrator, predictionVectorizer, support,"cal");
-
-        System.out.println("performance on validation set");
+        System.out.println("=================================");
+        System.out.println("on validation set");
 
         showPerformance(config, valid, cbm, labelCalibrator, setCalibrator, predictionVectorizer, support,"valid");
-
-        System.out.println(" performance on test set");
+        System.out.println("=================================");
+        System.out.println("on test set");
 
         showPerformance(config, test, cbm, labelCalibrator, setCalibrator, predictionVectorizer, support,"test");
     }
@@ -155,11 +155,12 @@ public class Exp1312 {
         double mse = CalibrationEval.mse(generateStream(predictions,calibrator));
         double ace = CalibrationEval.absoluteError(generateStream(predictions,calibrator),10);
         double sharpness = CalibrationEval.sharpness(generateStream(predictions,calibrator),10);
+        System.out.println("calibration performance");
         System.out.println("mse="+mse);
-        System.out.println("absolute calibration error="+ace);
-        System.out.println("square calibration error="+CalibrationEval.squareError(generateStream(predictions,calibrator),10));
+//        System.out.println("absolute calibration error="+ace);
+        System.out.println("alignment error="+CalibrationEval.squareError(generateStream(predictions,calibrator),10));
         System.out.println("sharpness="+sharpness);
-        System.out.println("variance="+CalibrationEval.variance(generateStream(predictions,calibrator)));
+        System.out.println("uncertainty="+CalibrationEval.variance(generateStream(predictions,calibrator)));
         System.out.println(Displayer.displayCalibrationResult(generateStream(predictions,calibrator)));
         CaliRes caliRes = new CaliRes();
         caliRes.mse = mse;
@@ -224,7 +225,7 @@ public class Exp1312 {
         MultiLabel[] predictions = classifier.predict(dataset);
 
         MLMeasures mlMeasures =new MLMeasures(dataset.getNumClasses(),dataset.getMultiLabels(), predictions);
-
+        System.out.println("classification performance");
         System.out.println(mlMeasures);
 
         Paths.get(config.getString("output")).toFile().mkdirs();

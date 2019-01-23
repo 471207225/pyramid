@@ -12,10 +12,17 @@ public class RunDemo {
         }
 
         Config config = new Config(args[0]);
-        Config brConfig = produceBRConfig(config);
-        CBMEN.main(brConfig);
+
+        if (config.getBoolean("trainBR")){
+            Config brConfig = produceBRConfig(config);
+            CBMEN.main(brConfig);
+        }
+
+
         Config caliConfig  = produceCaliConfig(config);
         Exp1312.main(caliConfig);
+
+
 
     }
 
@@ -39,7 +46,9 @@ public class RunDemo {
         cali.setString("cbm",Paths.get(config.getString("outputDir"),"model").toString());
         cali.setString("output",config.getString("outputDir"));
         cali.setString("predict.mode",config.getString("predictMode"));
-        String[] toCopy={"setPrior","brProb","card","encodeLabel","numTrainCandidates","numPredictCandidates","numIterations","shrinkage","numLeaves"};
+        String[] toCopy={"setPrior","brProb","card","encodeLabel","numTrainCandidates",
+                "numPredictCandidates","numIterations","shrinkage","numLeaves","labelCalibrator",
+        "setCalibrator","minDataPerLeaf",};
         Config.copy(config,cali,toCopy);
         return cali;
 
@@ -47,12 +56,8 @@ public class RunDemo {
 
     private static Config getCaliDefaultConfig(){
         String de =
-                "setPrior=true\n" +
-                "brProb=true\n" +
                 "cardPrior=false\n" +
-                "card=true\n" +
                 "pairPrior=false\n" +
-                "encodeLabel=true\n" +
                 "f1Prior=false\n" +
                 "cbmProb=false\n" +
                 "implication=false\n" +
@@ -60,15 +65,7 @@ public class RunDemo {
                 "position=false\n" +
                 "cdf=false\n" +
                 "hierarchy=false\n" +
-                "numTrainCandidates=8\n" +
-                "numPredictCandidates=8\n" +
-                "predict.mode=reranker\n" +
-                "labelCalibrator=isotonic\n" +
-                "setCalibrator=reranker\n" +
-                "numIterations=100\n" +
-                "numLeaves=10\n" +
-                "shrinkage=0.1\n" +
-                "minDataPerLeaf=5\n" +
+
                 "monotonic=true\n" +
                 "logScale=false\n" +
                 "weight=uniform\n" +

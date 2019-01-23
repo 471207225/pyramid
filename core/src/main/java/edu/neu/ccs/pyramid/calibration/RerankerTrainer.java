@@ -27,7 +27,7 @@ public class RerankerTrainer {
 
         RegTreeConfig regTreeConfig = new RegTreeConfig().setMaxNumLeaves(numLeaves).setMinDataPerLeaf(minDataPerLeaf);
         RegTreeFactory regTreeFactory = new RegTreeFactory(regTreeConfig);
-        System.out.println("weights = "+ Arrays.toString(instanceWeights));
+//        System.out.println("weights = "+ Arrays.toString(instanceWeights));
         LSBoostOptimizer optimizer = new LSBoostOptimizer(lsBoost, regDataSet, regTreeFactory, instanceWeights, regDataSet.getLabels());
         if (monotonic){
             optimizer.setMonotonicity(predictionVectorizer.getMonotonicityConstraints(cbm.getNumClasses()));
