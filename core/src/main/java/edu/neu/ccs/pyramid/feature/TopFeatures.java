@@ -1,6 +1,5 @@
 package edu.neu.ccs.pyramid.feature;
 
-import edu.neu.ccs.pyramid.feature_selection.FeatureDistribution;
 
 import java.util.List;
 
