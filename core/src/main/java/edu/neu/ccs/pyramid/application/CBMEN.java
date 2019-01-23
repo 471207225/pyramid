@@ -425,7 +425,7 @@ public class CBMEN {
         List<MultiLabel> support = DataSetUtil.gatherMultiLabels(trainSet);
         Serialization.serialize(support, new File(output,"support"));
 
-        featureImportance(config, cbm, trainSet.getFeatureList(), trainSet.getLabelTranslator());
+//        featureImportance(config, cbm, trainSet.getFeatureList(), trainSet.getLabelTranslator());
 
         System.out.println("Making predictions on train set with 3 different predictors designed for different metrics:");
         reportAccPrediction(config, cbm, trainSet, "train");

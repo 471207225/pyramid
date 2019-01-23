@@ -26,9 +26,10 @@ import java.util.stream.Stream;
  * ranker for br lr
  */
 public class Exp1312 {
-    public static void main(String[] args) throws Exception{
-        Config config = new Config(args[0]);
-        System.out.println(config);
+
+
+    public static void main(Config config) throws Exception{
+
 
         MultiLabelClfDataSet train = TRECFormat.loadMultiLabelClfDataSet(config.getString("train"),DataSetType.ML_CLF_SPARSE,true);
         MultiLabelClfDataSet valid = TRECFormat.loadMultiLabelClfDataSet(config.getString("valid"),DataSetType.ML_CLF_SPARSE,true);
@@ -137,9 +138,9 @@ public class Exp1312 {
 
 
 
-        System.out.println("performance on calibration set");
-
-        showPerformance(config, cal, cbm, labelCalibrator, setCalibrator, predictionVectorizer, support,"cal");
+//        System.out.println("performance on calibration set");
+//
+//        showPerformance(config, cal, cbm, labelCalibrator, setCalibrator, predictionVectorizer, support,"cal");
 
         System.out.println("performance on validation set");
 
@@ -165,14 +166,14 @@ public class Exp1312 {
         caliRes.ace= ace;
         caliRes.sharpness = sharpness;
 
-        List<Pair<Double,Double>> pairs = generateStream(predictions,calibrator).map(p-> new Pair<>(p.getFirst(),1.0*p.getSecond())).collect(Collectors.toList());
-        Bucketer.Result predictRes = Bucketer.groupWithEqualSize(pairs,100);
+//        List<Pair<Double,Double>> pairs = generateStream(predictions,calibrator).map(p-> new Pair<>(p.getFirst(),1.0*p.getSecond())).collect(Collectors.toList());
+//        Bucketer.Result predictRes = Bucketer.groupWithEqualSize(pairs,100);
 
-        System.out.println("equal sized buckets");
-        System.out.println("x=");
-        System.out.println(Arrays.toString(predictRes.getAverageX()));
-        System.out.println("y=");
-        System.out.println(Arrays.toString(predictRes.getAverageY()));
+//        System.out.println("equal sized buckets");
+//        System.out.println("x=");
+//        System.out.println(Arrays.toString(predictRes.getAverageX()));
+//        System.out.println("y=");
+//        System.out.println(Arrays.toString(predictRes.getAverageY()));
 
         return caliRes;
     }

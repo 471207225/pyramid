@@ -14,6 +14,8 @@ public class RunDemo {
         Config config = new Config(args[0]);
         Config brConfig = produceBRConfig(config);
         CBMEN.main(brConfig);
+        Config caliConfig  = produceCaliConfig(config);
+        Exp1312.main(caliConfig);
 
     }
 
@@ -22,10 +24,59 @@ public class RunDemo {
 
         br.setString("input.trainData", Paths.get(config.getString("dataPath"),"train").toString());
         br.setString("input.testData", Paths.get(config.getString("dataPath"),"test").toString());
-        br.setString("output.dir",config.getString("output.dir"));
+        br.setString("output.dir",config.getString("outputDir"));
         return br;
     }
 
+
+    private static Config produceCaliConfig(Config config){
+        Config cali = getCaliDefaultConfig();
+
+        cali.setString("train", Paths.get(config.getString("dataPath"),"train").toString());
+        cali.setString("cal", Paths.get(config.getString("dataPath"),"cal").toString());
+        cali.setString("valid", Paths.get(config.getString("dataPath"),"valid").toString());
+        cali.setString("test", Paths.get(config.getString("dataPath"),"test").toString());
+        cali.setString("cbm",Paths.get(config.getString("outputDir"),"model").toString());
+        cali.setString("output",config.getString("outputDir"));
+        String[] toCopy={"setPrior","brProb","card","encodeLabel","numTrainCandidates","numPredictCandidates","predict.mode","numIterations","shrinkage","numLeaves"};
+        Config.copy(config,cali,toCopy);
+        return cali;
+
+    }
+
+    private static Config getCaliDefaultConfig(){
+        String de =
+                "setPrior=true\n" +
+                "brProb=true\n" +
+                "cardPrior=false\n" +
+                "card=true\n" +
+                "pairPrior=false\n" +
+                "encodeLabel=true\n" +
+                "f1Prior=false\n" +
+                "cbmProb=false\n" +
+                "implication=false\n" +
+                "labelProbs=false\n" +
+                "position=false\n" +
+                "cdf=false\n" +
+                "hierarchy=false\n" +
+                "numTrainCandidates=8\n" +
+                "numPredictCandidates=8\n" +
+                "predict.mode=reranker\n" +
+                "labelCalibrator=isotonic\n" +
+                "setCalibrator=reranker\n" +
+                "numIterations=100\n" +
+                "numLeaves=10\n" +
+                "shrinkage=0.1\n" +
+                "minDataPerLeaf=5\n" +
+                "monotonic=true\n" +
+                "logScale=false\n" +
+                "weight=uniform\n" +
+                "ndcgTruncationLevel=10\n" +
+                "splitCalibrationData=true\n" +
+                "allowEmpty=true";
+        return Config.newConfigFromString(de);
+
+    }
 
     private static Config getBRDefaultConfig(){
         String de = "############## input and output ###############\n" +

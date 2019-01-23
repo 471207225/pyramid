@@ -24,5 +24,5 @@ LOG4J2="$PYRAMID_HOME/config/"
 
 # run
 exec java $JAVA_OPTS  -cp "$PYRAMID_CLASSPATH":"$LOG4J2"  \
-                edu.neu.ccs.pyramid.application.AppLauncher $@
+                edu.neu.ccs.pyramid.application.RunDemo $@
 
