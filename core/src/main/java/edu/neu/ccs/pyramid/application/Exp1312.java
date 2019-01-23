@@ -13,6 +13,7 @@ import edu.neu.ccs.pyramid.util.Pair;
 import edu.neu.ccs.pyramid.util.PrintUtil;
 import edu.neu.ccs.pyramid.util.Serialization;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.time.StopWatch;
 
 import java.io.File;
 import java.io.Serializable;
@@ -52,7 +53,9 @@ public class Exp1312 {
             setCalData = DataSetUtil.sampleData(cal, setCalIndices);
         }
 
-
+        System.out.println("Start training calibrator");
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         List<MultiLabel> support = DataSetUtil.gatherMultiLabels(train);
         LabelCalibrator labelCalibrator = null;
         switch (config.getString("labelCalibrator")){
@@ -133,6 +136,8 @@ public class Exp1312 {
             default:
                 throw new IllegalArgumentException("illegal setCalibrator, given="+config.getString("setCalibrator"));
         }
+        System.out.println("Finish training calibrator");
+        System.out.println("time spent on training calibrator = "+stopWatch);
 
 //        System.out.println(setCalibrator);
 
