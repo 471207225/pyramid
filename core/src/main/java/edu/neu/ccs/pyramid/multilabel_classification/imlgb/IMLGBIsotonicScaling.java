@@ -5,15 +5,16 @@ import edu.neu.ccs.pyramid.dataset.MultiLabelClfDataSet;
 import edu.neu.ccs.pyramid.regression.IsotonicRegression;
 import edu.neu.ccs.pyramid.util.Pair;
 import org.apache.mahout.math.Vector;
-import scala.Serializable;
 
+
+import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class IMLGBIsotonicScaling implements Serializable{
+public class IMLGBIsotonicScaling implements Serializable {
     private static final long serialVersionUID = 1L;
     private IsotonicRegression isotonicRegression;
     private IMLGradientBoosting boosting;

@@ -98,12 +98,12 @@
             <artifactId>phrase-count-plugin</artifactId>
             <version>1.0</version>
         </dependency>
-        <dependency> <!-- Spark dependency -->
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.11</artifactId>
-            <version>2.0.2</version>
-            <scope>provided</scope>
-        </dependency>
+        <!--<dependency> &lt;!&ndash; Spark dependency &ndash;&gt;-->
+            <!--<groupId>org.apache.spark</groupId>-->
+            <!--<artifactId>spark-core_2.11</artifactId>-->
+            <!--<version>2.0.2</version>-->
+            <!--<scope>provided</scope>-->
+        <!--</dependency>-->
         <!--<dependency>-->
             <!--<groupId>org.apache.spark</groupId>-->
             <!--<artifactId>spark-sql_2.10</artifactId>-->
