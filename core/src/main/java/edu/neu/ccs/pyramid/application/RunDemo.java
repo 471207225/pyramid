@@ -38,7 +38,8 @@ public class RunDemo {
         cali.setString("test", Paths.get(config.getString("dataPath"),"test").toString());
         cali.setString("cbm",Paths.get(config.getString("outputDir"),"model").toString());
         cali.setString("output",config.getString("outputDir"));
-        String[] toCopy={"setPrior","brProb","card","encodeLabel","numTrainCandidates","numPredictCandidates","predict.mode","numIterations","shrinkage","numLeaves"};
+        cali.setString("predict.mode",config.getString("predictMode"));
+        String[] toCopy={"setPrior","brProb","card","encodeLabel","numTrainCandidates","numPredictCandidates","numIterations","shrinkage","numLeaves"};
         Config.copy(config,cali,toCopy);
         return cali;
 

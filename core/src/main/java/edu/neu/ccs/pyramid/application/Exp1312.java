@@ -102,7 +102,7 @@ public class Exp1312 {
             case "cardinality_isotonic":
                 setCalibrator = new VectorCardIsoSetCalibrator(calibratorTrainData, 1, 3);
                 break;
-            case "reranker":
+            case "GB":
                 RerankerTrainer rerankerTrainer = RerankerTrainer.newBuilder()
                         .numCandidates(config.getInt("numPredictCandidates"))
                         .monotonic(config.getBoolean("monotonic"))
@@ -214,7 +214,7 @@ public class Exp1312 {
                 classifier = new edu.neu.ccs.pyramid.multilabel_classification.predictor.SupportPredictor(cbm, identity, support);
                 break;
 
-            case "reranker":
+            case "rerank":
                 classifier = (Reranker)setCalibrator;
                 break;
 
