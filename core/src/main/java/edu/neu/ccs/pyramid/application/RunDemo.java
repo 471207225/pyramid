@@ -14,8 +14,10 @@ public class RunDemo {
         Config config = new Config(args[0]);
 
         if (config.getBoolean("trainBR")){
+            System.out.println("Start training BR classifier");
             Config brConfig = produceBRConfig(config);
             CBMEN.main(brConfig);
+            System.out.println("Finish training BR classifier");
         }
 
 
@@ -32,6 +34,9 @@ public class RunDemo {
         br.setString("input.trainData", Paths.get(config.getString("dataPath"),"train").toString());
         br.setString("input.testData", Paths.get(config.getString("dataPath"),"test").toString());
         br.setString("output.dir",config.getString("outputDir"));
+        br.setString("train.iterations",config.getString("BR.iteration"));
+        br.setString("train.penalty",config.getString("BR.penalty"));
+        br.setString("train.l1Ratio",config.getString("BR.l1Ratio"));
         return br;
     }
 
@@ -96,7 +101,7 @@ public class RunDemo {
                 "# If external validation data is given, the model is trained on the full training data\n" +
                 "# and tuned on the given validation data; otherwise, the model is trained on 80% of the training data,\n" +
                 "# and tuned on the rest 20% of the training data.\n" +
-                "tune=true\n" +
+                "tune=false\n" +
                 "\n" +
                 "# Train the model on all the available data (excluding test data), using tuned or user specified hyper parameters\n" +
                 "# If the external validation data is also given, the model is trained on training data + validation data\n" +
@@ -179,7 +184,7 @@ public class RunDemo {
                 "# These hyper parameters include: train.iterations, train.penalty, train.l1Ratio, and train.numComponents\n" +
                 "# if true, users do not need to specify these values\n" +
                 "# if false or if no tuning has be performed, users need to provide a value for each of them\n" +
-                "train.useTunedHyperParameters=true\n" +
+                "train.useTunedHyperParameters=false\n" +
                 "\n" +
                 "# Number of EM training iterations\n" +
                 "train.iterations=1\n" +

@@ -40,7 +40,7 @@ public class CBMEN {
 
     public static void main(Config config) throws Exception {
 
-        System.out.println(config);
+//        System.out.println(config);
 
         VERBOSE = config.getBoolean("output.verbose");
 
@@ -127,22 +127,22 @@ public class CBMEN {
                 }
                 Config tunedHypers = new Config(hyperFile);
                 HyperParameters hyperParameters = new HyperParameters(tunedHypers);
-                System.out.println("Start training with tuned hyper parameters:");
-                System.out.println("train.numComponents = "+hyperParameters.numComponents);
-                System.out.println("train.penalty = "+hyperParameters.penalty);
-                System.out.println("train.l1Ratio = "+hyperParameters.l1Ratio);
-                System.out.println("train.iterations = "+hyperParameters.iterations);
+//                System.out.println("Start training with tuned hyper parameters:");
+//                System.out.println("train.numComponents = "+hyperParameters.numComponents);
+//                System.out.println("train.penalty = "+hyperParameters.penalty);
+//                System.out.println("train.l1Ratio = "+hyperParameters.l1Ratio);
+//                System.out.println("train.iterations = "+hyperParameters.iterations);
 
 
                 MultiLabelClfDataSet trainSet = loadTrainData(config);
                 train(config, hyperParameters, trainSet);
             } else {
                 HyperParameters hyperParameters = new HyperParameters(config);
-                System.out.println("Start training with given hyper parameters:");
-                System.out.println("train.numComponents = "+hyperParameters.numComponents);
-                System.out.println("train.penalty = "+hyperParameters.penalty);
-                System.out.println("train.l1Ratio = "+hyperParameters.l1Ratio);
-                System.out.println("train.iterations = "+hyperParameters.iterations);
+//                System.out.println("Start training with given hyper parameters:");
+//                System.out.println("train.numComponents = "+hyperParameters.numComponents);
+//                System.out.println("train.penalty = "+hyperParameters.penalty);
+//                System.out.println("train.l1Ratio = "+hyperParameters.l1Ratio);
+//                System.out.println("train.iterations = "+hyperParameters.iterations);
 
                 MultiLabelClfDataSet trainSet = loadTrainData(config);
                 train(config, hyperParameters, trainSet);
@@ -150,11 +150,11 @@ public class CBMEN {
             System.out.println("============================================================");
         }
 
-        if (config.getBoolean("test")){
-            System.out.println("============================================================");
-            test(config);
-            System.out.println("============================================================");
-        }
+//        if (config.getBoolean("test")){
+//            System.out.println("============================================================");
+//            test(config);
+//            System.out.println("============================================================");
+//        }
 
     }
 
@@ -253,22 +253,22 @@ public class CBMEN {
                 }
                 Config tunedHypers = new Config(hyperFile);
                 HyperParameters hyperParameters = new HyperParameters(tunedHypers);
-                System.out.println("Start training with tuned hyper parameters:");
-                System.out.println("train.numComponents = "+hyperParameters.numComponents);
-                System.out.println("train.penalty = "+hyperParameters.penalty);
-                System.out.println("train.l1Ratio = "+hyperParameters.l1Ratio);
-                System.out.println("train.iterations = "+hyperParameters.iterations);
+//                System.out.println("Start training with tuned hyper parameters:");
+//                System.out.println("train.numComponents = "+hyperParameters.numComponents);
+//                System.out.println("train.penalty = "+hyperParameters.penalty);
+//                System.out.println("train.l1Ratio = "+hyperParameters.l1Ratio);
+//                System.out.println("train.iterations = "+hyperParameters.iterations);
 
 
                 MultiLabelClfDataSet trainSet = loadTrainData(config);
                 train(config, hyperParameters, trainSet);
             } else {
                 HyperParameters hyperParameters = new HyperParameters(config);
-                System.out.println("Start training with given hyper parameters:");
-                System.out.println("train.numComponents = "+hyperParameters.numComponents);
-                System.out.println("train.penalty = "+hyperParameters.penalty);
-                System.out.println("train.l1Ratio = "+hyperParameters.l1Ratio);
-                System.out.println("train.iterations = "+hyperParameters.iterations);
+//                System.out.println("Start training with given hyper parameters:");
+//                System.out.println("train.numComponents = "+hyperParameters.numComponents);
+//                System.out.println("train.penalty = "+hyperParameters.penalty);
+//                System.out.println("train.l1Ratio = "+hyperParameters.l1Ratio);
+//                System.out.println("train.iterations = "+hyperParameters.iterations);
 
                 MultiLabelClfDataSet trainSet = loadTrainData(config);
                 train(config, hyperParameters, trainSet);
@@ -394,8 +394,8 @@ public class CBMEN {
         List<Integer> unobservedLabels = DataSetUtil.unobservedLabels(trainSet);
 
         if (!unobservedLabels.isEmpty()){
-            System.out.println("The following labels do not actually appear in the training set and therefore cannot be learned:");
-            System.out.println(ListUtil.toSimpleString(unobservedLabels));
+//            System.out.println("The following labels do not actually appear in the training set and therefore cannot be learned:");
+//            System.out.println(ListUtil.toSimpleString(unobservedLabels));
         }
         String output = config.getString("output.dir");
         FileUtils.writeStringToFile(new File(output,"unobserved_labels.txt"), ListUtil.toSimpleString(unobservedLabels));
@@ -405,20 +405,20 @@ public class CBMEN {
         CBM cbm = newCBM(config,trainSet, hyperParameters);
 
         ENCBMOptimizer optimizer = getOptimizer(config, hyperParameters, cbm, trainSet);
-        System.out.println("Initializing the model");
+//        System.out.println("Initializing the model");
         if (config.getBoolean("train.randomInitialize")) {
             optimizer.randInitialize();
         } else {
             optimizer.initialize();
         }
-        System.out.println("Initialization done");
+//        System.out.println("Initialization done");
 
         for (int iter=1;iter<=hyperParameters.iterations;iter++){
             System.out.println("Training progress: iteration "+iter );
             optimizer.iterate();
         }
 
-        System.out.println("training done!");
+//        System.out.println("training done!");
         System.out.println("time spent on training = "+stopWatch);
 
         Serialization.serialize(cbm, new File(output,"model"));
@@ -427,11 +427,11 @@ public class CBMEN {
 
 //        featureImportance(config, cbm, trainSet.getFeatureList(), trainSet.getLabelTranslator());
 
-        System.out.println("Making predictions on train set with 3 different predictors designed for different metrics:");
-        reportAccPrediction(config, cbm, trainSet, "train");
-        reportF1Prediction(config, cbm, trainSet, "train");
-        reportHammingPrediction(config, cbm, trainSet, "train");
-        reportGeneral(config, cbm, trainSet, "train");
+//        System.out.println("Making predictions on train set with 3 different predictors designed for different metrics:");
+//        reportAccPrediction(config, cbm, trainSet, "train");
+//        reportF1Prediction(config, cbm, trainSet, "train");
+//        reportHammingPrediction(config, cbm, trainSet, "train");
+//        reportGeneral(config, cbm, trainSet, "train");
     }
 
     private static void test(Config config) throws Exception{
@@ -718,15 +718,15 @@ public class CBMEN {
                 MultiLabel empty = new MultiLabel();
                 if (seen.contains(empty)){
                     cbm.setAllowEmpty(true);
-                    if (VERBOSE){
-                        System.out.println("training set contains empty labels, automatically set predict.allowEmpty = true");
-                    }
+//                    if (VERBOSE){
+//                        System.out.println("training set contains empty labels, automatically set predict.allowEmpty = true");
+//                    }
 
                 } else {
                     cbm.setAllowEmpty(false);
-                    if (VERBOSE){
-                        System.out.println("training set does not contain empty labels, automatically set predict.allowEmpty = false");
-                    }
+//                    if (VERBOSE){
+//                        System.out.println("training set does not contain empty labels, automatically set predict.allowEmpty = false");
+//                    }
                 }
                 break;
             default:
