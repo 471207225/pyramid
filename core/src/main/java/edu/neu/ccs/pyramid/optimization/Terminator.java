@@ -2,7 +2,6 @@ package edu.neu.ccs.pyramid.optimization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.xpath.operations.And;
 
 import java.io.Serializable;
 import java.util.ArrayList;

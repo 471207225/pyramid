@@ -21,7 +21,6 @@ import edu.neu.ccs.pyramid.util.MathUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.mahout.math.Vector;
-import org.apache.xpath.operations.Bool;
 
 import java.util.ArrayList;
 import java.util.List;
