@@ -106,10 +106,10 @@ public class App6 {
                 System.out.println("iteration "+iteration);
                 System.out.println("time = "+stopWatch);
                 System.out.println("training objective = "+optimizer.getTerminator().getLastValue());
-                System.out.println("training performance:");
-                System.out.println(new MLMeasures(predictor,trainSet));
-                System.out.println("test performance:");
-                System.out.println(new MLMeasures(predictor,testSet));
+//                System.out.println("training performance:");
+//                System.out.println(new MLMeasures(predictor,trainSet));
+//                System.out.println("test performance:");
+//                System.out.println(new MLMeasures(predictor,testSet));
                 String modelName = "model_crf";
                 String output = config.getString("output.folder");
                 (new File(output)).mkdirs();
